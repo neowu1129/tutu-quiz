@@ -374,6 +374,16 @@ var DICE_SVG = '<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http:
 window.addEventListener('DOMContentLoaded', function() {
   RemoteStore.init();
 
+  // 如果已测评过，直接跳到结果页
+  try {
+    var completed = JSON.parse(localStorage.getItem('quiz_completed_v2'));
+    if (completed && completed.answers && completed.answers.length === QUIZ_CONFIG.questions.length) {
+      showPage('page-result');
+      renderResult(completed);
+      return;
+    }
+  } catch(e) {}
+
   var nameInput = $('studentNameInput');
   var startBtn = $('startQuizBtn');
 
@@ -664,6 +674,8 @@ function finishQuiz() {
   };
 
   saveResultLocal(resultData);
+  // 标记已完成测评，下次打开直接显示结果
+  localStorage.setItem('quiz_completed_v2', JSON.stringify(resultData));
 
   if (RemoteStore.ready()) {
     showToast('正在同步到云端...', 'info');
