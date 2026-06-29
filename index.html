@@ -268,10 +268,9 @@ var QUIZ_CONFIG = {
     {
       lessonId: 2, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
       text: "两个六面的正方体骰子，6个面都是1点到6点，现在两个骰子被面对面粘在一起了，能不能通过观察就知道粘起来的是哪两个面？",
-      diceImage: true,
       options: ["能", "不能"],
-      answer: 1,
-      explain: "两个骰子面对面粘在一起，粘合的那两个面被藏在了中间，从外面不管怎么观察都看不到。就像把两颗糖粘在一起，粘合的地方被挡住了！"
+      answer: 0,
+      explain: "骰子只有6个面，每个数字1~6各出现一次。两个骰子面对面粘在一起，每个骰子只挡住了1个面，剩下的5个面都能观察到。看到5个面就能推出隐藏的那个面是几，所以两个被粘住的面都能知道！"
     },
     {
       lessonId: 2, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
@@ -289,10 +288,10 @@ var QUIZ_CONFIG = {
     },
     {
       lessonId: 3, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
-      text: "三个跷跷板告诉我们：\n① A比B重\n② B比C重\n③ D比A轻\n\n请问最轻的是谁？",
+      text: "三个跷跷板告诉我们：\n① A比B重\n② B比C重\n③ D比A轻\n\n请问最重的是谁？",
       options: ["A", "B", "C", "D"],
-      answer: 2,
-      explain: "用神箭法排序：A>B, B>C, A>D→D<A。已知A>B>C，D比A轻但D和B、C的关系不确定，最轻的一定是C。"
+      answer: 0,
+      explain: "用神箭法排序：由①得A>B，由②得B>C，所以A>B>C；由③得D<A。综合起来A比B、C、D都重，所以最重的是A。"
     },
     {
       lessonId: 4, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",

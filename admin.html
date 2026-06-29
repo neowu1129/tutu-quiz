@@ -280,10 +280,10 @@ var QUIZ_CONFIG = {
   questions: [
     { lessonId:1, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"2+2+2=6，你觉得下面哪种写法能表示这个式子？", options:["3+3=6","2×3=6","3×2=6","B和C都对"], answer:3, explain:"2+2+2是3个2相加，可以写成2×3=6或3×2=6。两种写法都对！" },
     { lessonId:1, type:"trap", label:"易错题", timeLimit:50, questionType:"input", inputMode:"number", text:"5个3相加后，再加上3个5是多少？", answer:"30", explain:"5个3相加=15，3个5相加=15，合起来15+15=30" },
-    { lessonId:2, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"两个六面正方体骰子面对面粘在一起，能不能通过观察就知道粘起来的是哪两个面？", options:["能","不能"], answer:1, explain:"粘合的那两个面被藏在中间，从外面看不到" },
+    { lessonId:2, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"两个六面正方体骰子面对面粘在一起，能不能通过观察就知道粘起来的是哪两个面？", options:["能","不能"], answer:0, explain:"骰子只有6个面，每个数字1~6各出现一次。两个骰子面对面粘在一起，每个骰子只挡住了1个面，剩下的5个面都能观察到。看到5个面就能推出隐藏的那个面是几，所以两个被粘住的面都能知道！" },
     { lessonId:2, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"以下四句话中哪几句是错的？（1）正方形由4条相等的线段组成，正方体由4个完全相同的正方形围成；（2）球体和长方体可以拼成圆柱体；（3）球体无论从哪个面看都是一样的", options:["（1）（2）","（2）（3）","（1）（3）","（1）（2）（3）"], answer:0, explain:"（1）错——正方体由6个面围成不是4个（2）错——拼不出圆柱（3）对——球体各方向都是圆" },
     { lessonId:3, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"小明比小红多3颗糖。各吃掉1颗，现在多几颗？", options:["多5颗","多3颗","多2颗","一样多"], answer:1, explain:"同减不改变差！还是多3颗" },
-    { lessonId:3, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"①A比B重 ②B比C重 ③D比A轻。最轻的是谁？", options:["A","B","C","D"], answer:2, explain:"A>B>C，D比A轻但D和B、C不确定，最轻的是C" },
+    { lessonId:3, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"①A比B重 ②B比C重 ③D比A轻。最重的是谁？", options:["A","B","C","D"], answer:0, explain:"A>B>C，A>D，所以A最重" },
     { lessonId:4, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"3个同学见面，每两人握一次手，共握几次？", options:["2次","3次","4次","6次"], answer:1, explain:"打枪法：2+1=3次" },
     { lessonId:4, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"4个球队参加比赛，每两队必须比赛一次，一共要比几次？", options:["4次","5次","6次","8次"], answer:2, explain:"3+2+1=6次" },
     { lessonId:5, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"甲乙丙分别来自北京上海广州。甲不是北京，乙不是北京也不是上海。乙来自？", options:["北京","上海","广州","无法确定"], answer:2, explain:"乙不是北京也不是上海→乙=广州" },
