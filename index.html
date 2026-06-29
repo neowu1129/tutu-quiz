@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>一升二数学思维挑战</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","HarmonyOS Sans SC",-apple-system,sans-serif;background:#FFF8E7;color:#3D2817;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit}
+:root{--orange:#FF7A45;--orange-light:#FF9F66;--yellow:#FFC93C;--cream:#FFF8E7;--cream-deep:#FCEFD5;--red:#E84855;--green:#7BC4A4;--green-deep:#4A9B6E;--brown:#3D2817;--brown-light:#5D3A1A;--shadow:0 4px 16px rgba(255,122,69,.12);--shadow-hover:0 8px 24px rgba(255,122,69,.25)}
+.page{display:none;min-height:100vh;padding-bottom:40px}
+.page.active{display:block;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== 入口页 ===== */
+.entry-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
+.entry-icon{width:80px;height:80px;margin:0 auto 16px;animation:bounce 2s ease-in-out infinite}
+.entry-icon img{width:100%;height:100%;object-fit:contain}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.entry-title{font-size:28px;font-weight:800;color:var(--brown);margin-bottom:8px}
+.entry-desc{font-size:17px;color:#8B8680;margin-bottom:32px;max-width:320px;line-height:1.7}
+.entry-card{background:white;border-radius:24px;padding:28px 24px;width:100%;max-width:400px;box-shadow:var(--shadow)}
+.entry-label{font-size:16px;font-weight:700;color:var(--brown);margin-bottom:8px;text-align:left}
+.entry-input{width:100%;border:2px solid var(--cream-deep);border-radius:14px;padding:14px 16px;font-size:18px;outline:none;transition:all .2s;background:var(--cream)}
+.entry-input:focus{border-color:var(--orange);background:white}
+.entry-btn{width:100%;margin-top:20px;padding:16px;background:linear-gradient(135deg,var(--orange),var(--orange-light));color:white;border-radius:18px;font-size:20px;font-weight:800;box-shadow:var(--shadow-hover);transition:all .2s}
+.entry-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,122,69,.35)}
+.entry-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.entry-rules{margin-top:16px;background:var(--cream-deep);border-radius:14px;padding:14px 16px;text-align:left;font-size:14px;color:var(--brown-light);line-height:1.7}
+.entry-rules b{color:var(--orange)}
+
+/* ===== 答题页 ===== */
+.quiz-header{position:sticky;top:0;z-index:50;background:rgba(255,248,231,.95);backdrop-filter:blur(8px);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;max-width:720px;margin:0 auto}
+.quiz-progress-text{font-size:14px;font-weight:700;color:var(--brown)}
+.quiz-timer{font-size:32px;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;min-width:60px;text-align:right}
+.quiz-timer.warning{color:var(--red);animation:pulse .5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.quiz-progress-bar{height:6px;background:var(--cream-deep);border-radius:100px;margin:0 20px 16px;max-width:680px;margin-left:auto;margin-right:auto;overflow:hidden}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--yellow),var(--orange));border-radius:100px;transition:width .3s ease}
+.question-card{background:white;border-radius:24px;padding:28px 24px;margin:16px 20px;max-width:680px;margin-left:auto;margin-right:auto;box-shadow:var(--shadow)}
+.q-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;font-size:13px;font-weight:700;margin-bottom:14px}
+.q-badge.concept{background:#FFF4D6;color:#B88600}
+.q-badge.trap{background:#FCE8EA;color:var(--red)}
+.q-badge-num{background:var(--orange);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px}
+.q-lesson{font-size:13px;color:#8B8680;margin-bottom:8px;font-weight:600}
+.q-text{font-size:20px;font-weight:700;color:var(--brown);line-height:1.7;margin-bottom:20px}
+.q-options{display:flex;flex-direction:column;gap:10px}
+.q-option{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--cream);border:2px solid transparent;border-radius:16px;font-size:17px;cursor:pointer;transition:all .2s;text-align:left}
+.q-option:hover{border-color:var(--orange);background:white}
+.q-option.selected{border-color:var(--orange);background:#FFF0E8}
+.q-option-letter{width:32px;height:32px;border-radius:50%;background:var(--cream-deep);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--brown);flex-shrink:0;transition:all .2s}
+.q-option.selected .q-option-letter{background:var(--orange);color:white}
+.q-input-area{margin-top:8px}
+.q-input{width:100%;border:2px solid var(--cream-deep);border-radius:14px;padding:14px 16px;font-size:17px;outline:none;background:var(--cream);transition:all .2s;resize:none;min-height:60px}
+.q-input:focus{border-color:var(--orange);background:white}
+.q-input-hint{font-size:13px;color:#8B8680;margin-top:6px}
+.q-nav-row{max-width:680px;margin:12px auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.q-back-btn{padding:12px 24px;background:white;color:var(--brown);border:2px solid var(--cream-deep);border-radius:18px;font-size:16px;font-weight:700;transition:all .2s}
+.q-back-btn:hover{border-color:var(--orange);background:#FFF0E8}
+.q-skip-btn{padding:12px 20px;background:#FFF4D6;color:#B88600;border-radius:18px;font-size:15px;font-weight:700;transition:all .2s;border:2px solid transparent}
+.q-skip-btn:hover{border-color:#B88600}
+.q-submit-row{max-width:680px;margin:12px auto;padding:0 20px;display:flex;justify-content:flex-end}
+.q-submit-btn{padding:14px 36px;background:linear-gradient(135deg,var(--orange),var(--orange-light));color:white;border-radius:18px;font-size:18px;font-weight:800;box-shadow:var(--shadow);transition:all .2s}
+.q-submit-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover)}
+.q-submit-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* 骰子SVG */
+.dice-svg-wrap{display:flex;justify-content:center;margin:12px 0 16px}
+
+/* ===== 远程状态提示 ===== */
+.sync-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 24px;border-radius:100px;font-size:14px;font-weight:700;z-index:200;transition:all .4s ease;opacity:0;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.sync-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.sync-toast.success{background:#E8F5EC;color:var(--green-deep)}
+.sync-toast.error{background:#FCE8EA;color:var(--red)}
+.sync-toast.info{background:#FFF4D6;color:#B88600}
+.sync-badge{position:fixed;top:14px;right:14px;display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;font-size:12px;font-weight:700;z-index:100;background:white;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.sync-badge .dot{width:8px;height:8px;border-radius:50%}
+.sync-badge .dot.online{background:var(--green)}
+.sync-badge .dot.offline{background:var(--red)}
+
+/* ===== 结果页 ===== */
+.result-wrap{max-width:720px;margin:0 auto;padding:20px}
+.result-header{text-align:center;padding:24px 0 16px}
+.result-header h1{font-size:24px;font-weight:800;color:var(--brown)}
+.result-header p{font-size:15px;color:#8B8680;margin-top:4px}
+.verdict-box{background:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px;text-align:center}
+.verdict-text{font-size:17px;color:var(--brown);line-height:1.8;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.stat-card{background:white;border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.stat-num{font-size:26px;font-weight:800;color:var(--orange)}
+.stat-label{font-size:12px;color:#8B8680;margin-top:2px}
+.radar-wrap{background:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.radar-wrap h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.radar-subtitle{font-size:13px;color:#8B8680;margin-bottom:12px;padding-left:2px}
+.radar-canvas-wrap{display:flex;justify-content:center}
+canvas.radar-chart{max-width:400px;max-height:400px}
+.time-bar-wrap{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.time-bar-wrap h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.time-bar-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.time-bar-label{width:60px;font-size:13px;font-weight:600;color:var(--brown);flex-shrink:0;text-align:right}
+.time-bar-track{flex:1;height:16px;background:var(--cream-deep);border-radius:100px;overflow:hidden}
+.time-bar-fill{height:100%;border-radius:100px;transition:width 1s ease;font-size:10px;font-weight:700;color:white;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:24px}
+.time-bar-fill.fast{background:linear-gradient(90deg,var(--green),#5DD4A0)}
+.time-bar-fill.normal{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+.time-bar-fill.slow{background:linear-gradient(90deg,var(--red),#F06868)}
+.time-bar-limit{font-size:11px;color:#8B8680;width:30px;text-align:left}
+.detail-section{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.detail-section h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.detail-item{padding:12px 0;border-bottom:1px solid var(--cream-deep);display:flex;gap:12px;align-items:flex-start}
+.detail-item:last-child{border-bottom:none}
+.detail-body{flex:1;min-width:0}
+.detail-q{font-size:15px;font-weight:600;color:var(--brown);margin-bottom:4px}
+.detail-meta{font-size:13px;color:#8B8680;display:flex;gap:10px;flex-wrap:wrap}
+.detail-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.detail-tag.concept{background:#FFF4D6;color:#B88600}
+.detail-tag.trap{background:#FCE8EA;color:var(--red)}
+.conclusion-section{background:linear-gradient(135deg,#FFF0E8,#FFF8E7);border-radius:24px;padding:24px;margin-bottom:16px;border:2px solid var(--cream-deep)}
+.conclusion-section h3{font-size:18px;font-weight:800;color:var(--orange);margin-bottom:12px}
+.conclusion-text{font-size:16px;color:var(--brown);line-height:1.8}
+.conclusion-cta{margin-top:16px;padding:14px;background:white;border-radius:14px;font-size:15px;color:var(--brown);line-height:1.7;font-weight:600}
+
+@media(max-width:600px){
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<!-- 远程同步状态角标 -->
+<div class="sync-badge" id="syncBadge" style="display:none"><span class="dot" id="syncDot"></span><span id="syncLabel"></span></div>
+<!-- 底部 Toast -->
+<div class="sync-toast" id="syncToast"></div>
+
+<div id="app">
+  <!-- 入口页 -->
+  <div class="page active" id="page-entry">
+    <div class="entry-wrap">
+      <div class="entry-icon"><img src="data:image/png;base64,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" alt="途途课堂"></div>
+      <div class="entry-title">一升二数学思维挑战</div>
+      <div class="entry-desc">暑期大作战，一起来挑战！</div>
+      <div class="entry-card">
+        <div class="entry-label">你的名字</div>
+        <input class="entry-input" id="studentNameInput" placeholder="输入你的名字" maxlength="20" autocomplete="off">
+        <button class="entry-btn" id="startQuizBtn" disabled>开始挑战 →</button>
+        <div class="entry-rules">
+          <b>⚡ 挑战规则</b><br>
+          • 共10道题<br>
+          • 概念题每题限时 <b>25秒</b><br>
+          • 挑战题每题限时 <b>50秒</b><br>
+          • 看看哪位宝贝又快又准！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 答题页 -->
+  <div class="page" id="page-quiz">
+    <div class="quiz-header">
+      <span class="quiz-progress-text" id="quizProgressText">第 1/10 题</span>
+      <span class="quiz-timer" id="quizTimer">--</span>
+    </div>
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+    <div id="questionArea"></div>
+    <div class="q-nav-row">
+      <button class="q-back-btn" id="backBtn" style="display:none">← 上一题</button>
+      <button class="q-skip-btn" id="skipBtn">我不知道</button>
+    </div>
+    <div class="q-submit-row">
+      <button class="q-submit-btn" id="submitAnswerBtn" disabled>确认提交</button>
+    </div>
+  </div>
+
+  <!-- 结果页 -->
+  <div class="page" id="page-result">
+    <div class="result-wrap" id="resultContent"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ===== 远程存储模块 =====
+// ============================================================
+var RemoteStore = {
+  _cfg: null,
+  init: function() {
+    var search = window.location.search || '';
+    var match = search.match(/[?&]rc=([^&]+)/);
+    if (match) {
+      try {
+        var decoded = JSON.parse(atob(decodeURIComponent(match[1])));
+        if (decoded.k && decoded.b) {
+          this._cfg = { key: decoded.k, bin: decoded.b };
+          localStorage.setItem('quiz_rc', JSON.stringify(this._cfg));
+        }
+      } catch(e) {}
+    }
+    if (!this._cfg) {
+      try {
+        var saved = JSON.parse(localStorage.getItem('quiz_rc'));
+        if (saved && saved.key && saved.bin) this._cfg = saved;
+      } catch(e) {}
+    }
+    this._updateBadge();
+  },
+  ready: function() { return !!this._cfg; },
+  _updateBadge: function() {
+    // 学生端不显示同步状态（管理端有独立状态栏）
+    return;
+  },
+  save: function(result) {
+    if (!this.ready()) return Promise.resolve(false);
+    var self = this;
+    var url = 'https://api.jsonbin.io/v3/b/' + this._cfg.bin + '/latest';
+    return fetch(url, { headers: { 'X-Master-Key': this._cfg.key } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var records = Array.isArray(data.record) ? data.record : [];
+        records.push(result);
+        return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
+          method: 'PUT',
+          headers: { 'X-Master-Key': self._cfg.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify(records)
+        });
+      })
+      .then(function(r) { return r.ok; })
+      .catch(function() { return false; });
+  }
+};
+
+function showToast(msg, type) {
+  var el = document.getElementById('syncToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'sync-toast ' + (type || 'info') + ' show';
+  setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+// ============================================================
+// ===== 课程内容与题目配置 =====
+// ============================================================
+var QUIZ_CONFIG = {
+  grade: "一升二",
+  subject: "数学思维",
+  lessons: [
+    { id:1, name:"计算认知", tag:"计算", desc:"从加法到乘法的转换，理解乘法含义" },
+    { id:2, name:"几何空间", tag:"几何", desc:"立体图形认知，空间感知，面的观察" },
+    { id:3, name:"逻辑比较", tag:"逻辑", desc:"比轻重，有序比较，同增同减" },
+    { id:4, name:"组合问题", tag:"应用", desc:"有序思考，两两组合" },
+    { id:5, name:"推理思维", tag:"逻辑", desc:"排除推理，根据条件逐步推断" }
+  ],
+  questions: [
+    {
+      lessonId: 1, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
+      text: "2+2+2=6，你觉得下面哪种写法能表示这个式子？",
+      options: ["3+3=6", "2×3=6", "3×2=6", "B和C都对"],
+      answer: 3,
+      explain: "2+2+2是3个2相加，可以写成2×3=6或3×2=6。两种写法都对！这就是乘法的奥秘——交换位置结果不变。"
+    },
+    {
+      lessonId: 1, type: "trap", label: "易错题", timeLimit: 50, questionType: "input", inputMode: "number",
+      text: "5个3相加后，再加上3个5是多少？",
+      answer: "30",
+      acceptAnswers: ["30"],
+      explain: "5个3相加=15，3个5相加=15，合起来15+15=30。这道题的关键是要分清'几个几'的含义。"
+    },
+    {
+      lessonId: 2, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
+      text: "两个六面的正方体骰子，6个面都是1点到6点，现在两个骰子被面对面粘在一起了，能不能通过观察就知道粘起来的是哪两个面？",
+      diceImage: true,
+      options: ["能", "不能"],
+      answer: 1,
+      explain: "两个骰子面对面粘在一起，粘合的那两个面被藏在了中间，从外面不管怎么观察都看不到。就像把两颗糖粘在一起，粘合的地方被挡住了！"
+    },
+    {
+      lessonId: 2, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
+      text: "以下这四句话中，哪几句是错的？\n（1）正方形由4条相等的线段组成，正方体由4个完全相同的正方形围成\n（2）球体和长方体，可以拼成圆柱体\n（3）球体无论从哪个面看都是一样的",
+      options: ["（1）（2）", "（2）（3）", "（1）（3）", "（1）（2）（3）"],
+      answer: 0,
+      explain: "（1）错——正方体由6个面围成，不是4个！（2）错——球体和长方体拼不出圆柱体。（3）对——球体确实从哪个方向看都是圆形。"
+    },
+    {
+      lessonId: 3, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
+      text: "小明比小红多3颗糖。如果两人各吃掉1颗，现在小明比小红多几颗？",
+      options: ["多5颗", "多3颗", "多2颗", "一样多"],
+      answer: 1,
+      explain: "同减不改变差！各吃掉1颗，两人相差的数量不变，还是多3颗。这就是'同增同减'的道理。"
+    },
+    {
+      lessonId: 3, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
+      text: "三个跷跷板告诉我们：\n① A比B重\n② B比C重\n③ D比A轻\n\n请问最轻的是谁？",
+      options: ["A", "B", "C", "D"],
+      answer: 2,
+      explain: "用神箭法排序：A>B, B>C, A>D→D<A。已知A>B>C，D比A轻但D和B、C的关系不确定，最轻的一定是C。"
+    },
+    {
+      lessonId: 4, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
+      text: "3个同学见面，每两人握一次手，一共要握几次手？",
+      options: ["2次", "3次", "4次", "6次"],
+      answer: 1,
+      explain: "用打枪法：第1个和另外2个握=2次，第2个再和剩下1个握=1次。2+1=3次。"
+    },
+    {
+      lessonId: 4, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
+      text: "4个球队要参加世界杯比赛，每两队必须比赛一次，一共要比几次？",
+      options: ["4次", "5次", "6次", "8次"],
+      answer: 2,
+      explain: "打枪法：第1队和另外3队比=3次，第2队再和剩下2队比=2次，第3队和最后1队比=1次。3+2+1=6次。"
+    },
+    {
+      lessonId: 5, type: "concept", label: "易混淆概念", timeLimit: 25, questionType: "choice",
+      text: "甲、乙、丙分别来自北京、上海、广州（每人一个城市）。\n已知：甲不是北京人，乙既不是北京人也不是上海人。\n\n请问乙来自哪里？",
+      options: ["北京", "上海", "广州", "无法确定"],
+      answer: 2,
+      explain: "用排除法：乙不是北京也不是上海→乙=广州。剩下北京和上海给甲和丙。甲不是北京→甲=上海，丙=北京。"
+    },
+    {
+      lessonId: 5, type: "trap", label: "易错题", timeLimit: 50, questionType: "choice",
+      text: "王老师、李老师、张老师分别教语文、数学、英语（每人一科）。\n已知：\n① 王老师不教语文\n② 李老师不教数学\n③ 张老师教英语\n\n请问王老师教什么？",
+      options: ["语文", "数学", "英语"],
+      answer: 1,
+      explain: "表格法：张老师教英语→王老师只能教语文或数学。王老师不教语文→王老师教数学。李老师不教数学→李老师教语文。"
+    }
+  ]
+};
+
+// ===== 全局状态 =====
+var state = {
+  studentName: '',
+  currentQ: 0,
+  answers: [],       // 每道题的答案记录，index对应题号
+  submitted: []      // 标记哪些题已提交 true/false
+};
+
+// 初始化submitted数组
+for (var _i = 0; _i < QUIZ_CONFIG.questions.length; _i++) state.submitted.push(false);
+
+// ===== 本地存储 =====
+function getResults() { try { return JSON.parse(localStorage.getItem('quiz_results_v2') || '[]'); } catch(e) { return []; } }
+function saveResultLocal(d) { var r = getResults(); r.push(d); localStorage.setItem('quiz_results_v2', JSON.stringify(r)); }
+
+// ===== DOM =====
+function $(id) { return document.getElementById(id); }
+
+function showPage(id) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  $(id).classList.add('active');
+}
+
+// ===== 骰子SVG =====
+var DICE_SVG = '<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">'
+  + '<!-- 骰子主体 - 等轴测视角 -->'
+  + '<polygon points="60,10 105,35 105,85 60,110 15,85 15,35" fill="#FFF8E7" stroke="#3D2817" stroke-width="2"/>'
+  + '<!-- 顶面 -->'
+  + '<polygon points="60,10 105,35 60,60 15,35" fill="#FFE8D6" stroke="#3D2817" stroke-width="1.5"/>'
+  + '<!-- 左面 -->'
+  + '<polygon points="15,35 60,60 60,110 15,85" fill="#FFD4B8" stroke="#3D2817" stroke-width="1.5"/>'
+  + '<!-- 右面 -->'
+  + '<polygon points="105,35 60,60 60,110 105,85" fill="#FFC9A0" stroke="#3D2817" stroke-width="1.5"/>'
+  + '<!-- 顶面点数 (1) -->'
+  + '<circle cx="60" cy="35" r="5" fill="#E84855"/>'
+  + '<!-- 左面点数 (2) -->'
+  + '<circle cx="32" cy="60" r="4" fill="#3D2817"/>'
+  + '<circle cx="42" cy="82" r="4" fill="#3D2817"/>'
+  + '<!-- 右面点数 (3) -->'
+  + '<circle cx="88" cy="50" r="4" fill="#3D2817"/>'
+  + '<circle cx="82" cy="70" r="4" fill="#3D2817"/>'
+  + '<circle cx="76" cy="90" r="4" fill="#3D2817"/>'
+  + '</svg>';
+
+// ===== 入口 =====
+window.addEventListener('DOMContentLoaded', function() {
+  RemoteStore.init();
+
+  var nameInput = $('studentNameInput');
+  var startBtn = $('startQuizBtn');
+
+  nameInput.addEventListener('input', function() {
+    startBtn.disabled = !nameInput.value.trim();
+  });
+  nameInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !startBtn.disabled) startBtn.click();
+  });
+  startBtn.addEventListener('click', function() {
+    state.studentName = nameInput.value.trim();
+    state.currentQ = 0;
+    state.answers = [];
+    for (var i = 0; i < QUIZ_CONFIG.questions.length; i++) {
+      state.answers.push(null);
+      state.submitted[i] = false;
+    }
+    showPage('page-quiz');
+    renderQuestion();
+  });
+
+  $('submitAnswerBtn').addEventListener('click', function() { submitAnswer(); });
+  $('backBtn').addEventListener('click', function() { goBack(); });
+  $('skipBtn').addEventListener('click', function() { skipQuestion(); });
+});
+
+// ===== 答题 =====
+function renderQuestion() {
+  var q = QUIZ_CONFIG.questions[state.currentQ];
+  var idx = state.currentQ;
+  var total = QUIZ_CONFIG.questions.length;
+  var lesson = null;
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    if (QUIZ_CONFIG.lessons[i].id === q.lessonId) { lesson = QUIZ_CONFIG.lessons[i]; break; }
+  }
+
+  $('quizProgressText').textContent = '第 ' + (idx+1) + '/' + total + ' 题';
+  $('quizProgressFill').style.width = ((idx/total)*100) + '%';
+
+  // 返回按钮
+  $('backBtn').style.display = idx > 0 ? '' : 'none';
+
+  // 如果这题已经提交过，显示已作答状态
+  var alreadyAnswered = state.submitted[idx];
+
+  var letters = ['A','B','C','D'];
+  var inputHtml = '';
+
+  if (q.questionType === 'choice') {
+    inputHtml = '<div class="q-options">';
+    for (var i = 0; i < q.options.length; i++) {
+      var selClass = '';
+      if (alreadyAnswered && state.answers[idx] !== null && state.answers[idx].selected === i) {
+        selClass = ' selected';
+      }
+      inputHtml += '<div class="q-option' + selClass + '" data-idx="' + i + '"><span class="q-option-letter">' + letters[i] + '</span><span>' + q.options[i] + '</span></div>';
+    }
+    inputHtml += '</div>';
+  } else {
+    var inputType = q.inputMode === 'number' ? 'tel' : 'text';
+    var savedVal = '';
+    if (alreadyAnswered && state.answers[idx] !== null && typeof state.answers[idx].selected === 'string') {
+      savedVal = state.answers[idx].selected;
+    }
+    var inputMode = q.inputMode === 'number' ? ' inputmode="numeric" pattern="[0-9]*"' : '';
+    inputHtml = '<div class="q-input-area"><input class="q-input" id="answerInput" type="' + inputType + '"' + inputMode + ' placeholder="写下你的答案" value="' + savedVal + '">' + '<div class="q-input-hint">💡 仔细想一想，写清楚你的答案</div></div>';
+  }
+
+  // 骰子图
+  var diceHtml = '';
+  if (q.diceImage) {
+    diceHtml = '<div class="dice-svg-wrap">' + DICE_SVG + '</div>';
+  }
+
+  $('questionArea').innerHTML = '<div class="question-card">'
+    + '<div class="q-badge ' + q.type + '"><span class="q-badge-num">' + q.lessonId + '</span>' + q.label + ' · ' + q.timeLimit + 's</div>'
+    + '<div class="q-lesson">模块' + q.lessonId + '：' + lesson.name + '</div>'
+    + '<div class="q-text">' + q.text.replace(/\n/g,'<br>') + '</div>'
+    + diceHtml
+    + inputHtml
+    + '</div>';
+
+  // 如果已经作答，允许修改答案，同时提供下一题按钮
+  if (alreadyAnswered) {
+    $('submitAnswerBtn').textContent = '修改并提交';
+    $('submitAnswerBtn').disabled = false;
+    $('skipBtn').style.display = 'none';
+    // 回看时显示剩余时间
+    var prevAnswer = state.answers[idx];
+    state.timeLeft = 0; // 不计时
+    $('quizTimer').textContent = '已作答';
+  } else {
+    $('submitAnswerBtn').textContent = '确认提交';
+    $('submitAnswerBtn').disabled = true;
+    $('skipBtn').style.display = '';
+  }
+
+  state.questionStartTime = Date.now();
+  if (!alreadyAnswered) {
+    state.timeLeft = q.timeLimit;
+    updateTimer();
+    startTimer();
+  } else {
+    clearInterval(state.timerInterval);
+  }
+
+  // 下一题按钮（回看时显示）
+  var existingNextBtn = document.getElementById('nextBtn');
+  if (existingNextBtn) existingNextBtn.remove();
+  if (alreadyAnswered && idx < QUIZ_CONFIG.questions.length - 1) {
+    var nextBtn = document.createElement('button');
+    nextBtn.className = 'q-skip-btn';
+    nextBtn.id = 'nextBtn';
+    nextBtn.textContent = '下一题 →';
+    nextBtn.style.marginLeft = '8px';
+    document.querySelector('.q-nav-row').appendChild(nextBtn);
+    nextBtn.addEventListener('click', function() {
+      state.currentQ++;
+      renderQuestion();
+    });
+  }
+
+  if (q.questionType === 'choice') {
+    var opts = document.querySelectorAll('.q-option');
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].addEventListener('click', function() {
+        var all = document.querySelectorAll('.q-option');
+        for (var j = 0; j < all.length; j++) all[j].classList.remove('selected');
+        this.classList.add('selected');
+        $('submitAnswerBtn').disabled = false;
+      });
+    }
+  } else {
+    var inp = $('answerInput');
+    if (inp) {
+      // 限制只能输入数字
+      if (q.inputMode === 'number') {
+        inp.addEventListener('input', function() {
+          inp.value = inp.value.replace(/[^0-9]/g, '');
+          $('submitAnswerBtn').disabled = !inp.value.trim();
+        });
+      } else {
+        inp.addEventListener('input', function() {
+          $('submitAnswerBtn').disabled = !inp.value.trim();
+        });
+      }
+      if (!alreadyAnswered) inp.focus();
+    }
+  }
+}
+
+function startTimer() {
+  clearInterval(state.timerInterval);
+  if (state.submitted[state.currentQ]) {
+    $('quizTimer').textContent = '--';
+    return;
+  }
+  state.timerInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - state.questionStartTime) / 1000);
+    var q = QUIZ_CONFIG.questions[state.currentQ];
+    state.timeLeft = Math.max(0, q.timeLimit - elapsed);
+    updateTimer();
+    if (state.timeLeft <= 0) { clearInterval(state.timerInterval); submitAnswer(true); }
+  }, 100);
+}
+
+function updateTimer() {
+  var el = $('quizTimer');
+  el.textContent = state.timeLeft + 's';
+  if (state.timeLeft <= 5) el.classList.add('warning');
+  else el.classList.remove('warning');
+}
+
+function submitAnswer(isTimeout) {
+  clearInterval(state.timerInterval);
+  var q = QUIZ_CONFIG.questions[state.currentQ];
+  var wasAlreadyAnswered = state.submitted[state.currentQ];
+  var timeUsed = Math.min(Math.floor((Date.now() - state.questionStartTime) / 1000), q.timeLimit);
+
+  // 如果是回看后修改答案，保留原始用时
+  if (wasAlreadyAnswered && state.answers[state.currentQ]) {
+    timeUsed = state.answers[state.currentQ].timeUsed;
+  }
+
+  var selected, isCorrect;
+  if (q.questionType === 'choice') {
+    var selEl = document.querySelector('.q-option.selected');
+    selected = selEl ? parseInt(selEl.dataset.idx) : -1;
+    isCorrect = !isTimeout && selected === q.answer;
+  } else {
+    var inp = $('answerInput');
+    selected = inp ? inp.value.trim() : '';
+    var accepts = q.acceptAnswers || [q.answer];
+    isCorrect = false;
+    for (var i = 0; i < accepts.length; i++) {
+      if (accepts[i].toLowerCase().replace(/\s/g,'') === selected.toLowerCase().replace(/\s/g,'')) {
+        isCorrect = true; break;
+      }
+    }
+    if (isTimeout) isCorrect = false;
+  }
+
+  state.answers[state.currentQ] = {
+    qIndex: state.currentQ,
+    selected: selected,
+    timeUsed: timeUsed,
+    isCorrect: isCorrect,
+    isTimeout: isTimeout,
+    lessonId: q.lessonId
+  };
+  state.submitted[state.currentQ] = true;
+
+  // 自动进入下一题
+  if (state.currentQ < QUIZ_CONFIG.questions.length - 1) {
+    state.currentQ++;
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+function goBack() {
+  if (state.currentQ > 0) {
+    clearInterval(state.timerInterval);
+    state.currentQ--;
+    renderQuestion();
+  }
+}
+
+function skipQuestion() {
+  clearInterval(state.timerInterval);
+  var q = QUIZ_CONFIG.questions[state.currentQ];
+  var timeUsed = Math.floor((Date.now() - state.questionStartTime) / 1000);
+
+  state.answers[state.currentQ] = {
+    qIndex: state.currentQ,
+    selected: null,
+    timeUsed: timeUsed,
+    isCorrect: false,
+    isTimeout: false,
+    isSkip: true,
+    lessonId: q.lessonId
+  };
+  state.submitted[state.currentQ] = true;
+
+  if (state.currentQ < QUIZ_CONFIG.questions.length - 1) {
+    state.currentQ++;
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+// ===== 完成 =====
+function finishQuiz() {
+  var totalTime = 0, correctCount = 0;
+  for (var i = 0; i < state.answers.length; i++) {
+    if (state.answers[i]) {
+      totalTime += state.answers[i].timeUsed;
+      if (state.answers[i].isCorrect) correctCount++;
+    }
+  }
+
+  var lessonStats = {};
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    lessonStats[l.id] = { name: l.name, tag: l.tag, desc: l.desc, correct: 0, totalTime: 0, questions: [] };
+  }
+  for (var i = 0; i < state.answers.length; i++) {
+    var a = state.answers[i];
+    if (!a) continue;
+    var q = QUIZ_CONFIG.questions[i];
+    var ls = lessonStats[a.lessonId];
+    if (a.isCorrect) ls.correct++;
+    ls.totalTime += a.timeUsed;
+    ls.questions.push(JSON.parse(JSON.stringify(a)));
+  }
+
+  var resultData = {
+    name: state.studentName,
+    grade: QUIZ_CONFIG.grade,
+    subject: QUIZ_CONFIG.subject,
+    timestamp: Date.now(),
+    totalTime: totalTime,
+    correctCount: correctCount,
+    lessonStats: lessonStats,
+    answers: state.answers
+  };
+
+  saveResultLocal(resultData);
+
+  if (RemoteStore.ready()) {
+    showToast('正在同步到云端...', 'info');
+    RemoteStore.save(resultData).then(function(ok) {
+      if (ok) showToast('✓ 已成功同步到云端', 'success');
+      else showToast('同步失败，数据已保存到本地', 'error');
+    });
+  }
+
+  showPage('page-result');
+  renderResult(resultData);
+}
+
+// ===== 总评模板（10组） =====
+var CONCLUSION_TEMPLATES = [
+  "这次测评里的每道题，都是老师精心设计的「思维小关卡」。你勇敢地闯了过来，这本身就很棒！有的关卡你顺利通过了，说明你在这几个方面已经有了很好的基础；有些关卡可能还需要再练练，但别担心，这正是成长的空间。建议把这份测评截图发给途途老师，老师会根据你的具体情况，帮你制定最适合的学习路线，让你的数学思维更上一层楼！",
+  "通过这10道题，老师看到了你在{strong}方面的潜力，也发现了一些可以加强的地方。学习就像搭积木，每一块都要搭稳才能越来越高。你的基础已经很扎实了，接下来如果能有老师帮你把薄弱点补上，你会发现数学其实特别有趣！记得截图给途途老师，让老师帮你做更详细的分析哦！",
+  "你今天的表现让老师看到了一个认真思考的孩子！每道题背后都藏着一个思维方法——{method}，这些方法可不是看看就会的，需要在课堂上跟着老师一步步练出来。建议你把测评结果截图发给途途老师，老师会帮你安排针对性的练习，让你的思维能力再上一个台阶！",
+  "测评结束了！你一口气完成了10道题，这份坚持就很了不起。从结果来看，你在{strong}方面表现不错，在{weak}方面还有提升空间。其实这些知识点都是有内在联系的，只要跟着老师系统学习，你会发现自己越来越聪明！记得截图给途途老师，获得免费的深度分析哦！",
+  "每个孩子都有自己的节奏，你今天迈出了很重要的一步！这些题目覆盖了{modules}五个模块，全面考察了你的数学思维基础。不管结果怎样，这都是一个很好的起点。途途老师可以根据你的测评结果，帮你找到最适合的学习方式。快截图发给老师吧！",
+  "老师出题的时候可是用了心的——每道题都对应着二年级、三年级要学的重要知识点。你今天在{strong}上的表现让老师眼前一亮！至于{weak}方面，不用着急，专业的老师会帮你一步步搞定。把测评截图发给途途老师，让老师帮你做一份专属的学习规划吧！",
+  "恭喜你完成了这次思维挑战！这10道题就像10面小镜子，照出了你在数学思维上的优势和需要加强的地方。好消息是，这些都是可以通过学习快速提升的！途途老师有丰富的经验，能帮你把这些知识点串联起来，形成完整的思维体系。截图发给老师，开启你的进步之旅吧！",
+  "你今天做的这些题，覆盖了计算、几何、逻辑、组合和推理五个方面。每个方面都是未来数学学习的基石。你已经在{strong}上展现了不错的能力，如果在{weak}上也能打好基础，以后的学习会越来越轻松。途途老师可以帮你做更详细的分析，快截图发给老师吧！",
+  "每一次尝试都是进步的开始！你今天完成了10道思维题，展示了你在数学方面的思考能力。有的地方你做得很好，有的地方可能需要更多练习——这都很正常。重要的是，现在有人可以帮你找到提升的方向。截图发给途途老师，让老师帮你做深度分析，抓住这次成长的机会！",
+  "这份测评就像一次「思维体检」，帮你排查了知识基础中的优势和薄弱环节。你在{strong}方面表现突出，这是很好的基础！同时{weak}方面也需要关注，因为它是后续学习的重要铺垫。途途老师可以针对你的情况给出专业建议，截图发给老师，别错过这个免费分析的好机会！"
+];
+
+function getRandomConclusion(data) {
+  // 分析强项和弱项
+  var strong = [], weak = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    if (ls.correct >= 2) strong.push(l.name);
+    else if (ls.correct === 0) weak.push(l.name);
+  }
+  if (strong.length === 0) strong = ['逻辑思考'];
+  if (weak.length === 0) weak = ['组合应用'];
+
+  var methods = ['乘法转换、空间想象、有序比较、系统推理', '从加法到乘法的思维跳跃、空间观察力、逻辑推理链', '有序思考、排除法、对比分析法'];
+
+  var modules = '计算认知、几何空间、逻辑比较、组合问题、推理思维';
+
+  var template = CONCLUSION_TEMPLATES[Math.floor(Math.random() * CONCLUSION_TEMPLATES.length)];
+  template = template.replace(/\{strong\}/g, strong.join('、'));
+  template = template.replace(/\{weak\}/g, weak.join('、'));
+  template = template.replace(/\{method\}/g, methods[Math.floor(Math.random() * methods.length)]);
+  template = template.replace(/\{modules\}/g, modules);
+  return template;
+}
+
+// ===== 结果页渲染 =====
+function renderResult(data) {
+  var correctCount = data.correctCount;
+  var totalCount = 10;
+  var accuracy = Math.round((correctCount / totalCount) * 100);
+
+  var radarLabels = [];
+  var radarValues = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    radarLabels.push(l.name);
+    var ls = data.lessonStats[l.id];
+    radarValues.push(Math.max(0, Math.min(100, Math.round((ls.correct / 2) * 100))));
+  }
+
+  var avgMastery = 0;
+  for (var i = 0; i < radarValues.length; i++) avgMastery += radarValues[i];
+  avgMastery = Math.round(avgMastery / radarValues.length);
+
+  var avgTimePerQ = data.totalTime / 10;
+
+  var timeData = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    var limit = 0;
+    for (var j = 0; j < QUIZ_CONFIG.questions.length; j++) {
+      if (QUIZ_CONFIG.questions[j].lessonId === l.id) limit += QUIZ_CONFIG.questions[j].timeLimit;
+    }
+    timeData.push({ name: l.name, time: ls.totalTime, limit: limit });
+  }
+
+  // 评语
+  var verdictText = '';
+  if (correctCount === totalCount) {
+    verdictText = data.name + '宝贝表现的太棒了！但也不要骄傲哦，有好的基础，还要再争取配上好的思维方法，才能又准又快！马上发给途途老师再帮你深度分析下哦！';
+  } else if (accuracy > 60) {
+    verdictText = data.name + '宝贝，很不错哦👍 不要灰心哦，老师是在帮你摸排基础呢，马上发给途途老师帮你深度分析看，刚好可以抓住这次成长的机会呢！';
+  } else {
+    verdictText = data.name + '宝贝，不要因为这次测评灰心呀，老师是在帮你摸排基础呢，马上发给途途老师帮你深度分析看，当成是一次成长的机会哦！';
+  }
+
+  var html = '';
+  html += '<div class="result-header"><h1>' + data.name + '的能力评估报告</h1><p>' + data.grade + ' · ' + data.subject + ' · ' + new Date(data.timestamp).toLocaleDateString('zh-CN') + '</p></div>';
+
+  // 评语模块
+  html += '<div class="verdict-box"><div class="verdict-text">' + verdictText + '</div></div>';
+
+  // 三栏统计
+  html += '<div class="stat-grid"><div class="stat-card"><div class="stat-num">' + data.correctCount + '/10</div><div class="stat-label">答对题数</div></div><div class="stat-card"><div class="stat-num">' + data.totalTime + 's</div><div class="stat-label">总用时</div></div><div class="stat-card"><div class="stat-num">' + avgMastery + '%</div><div class="stat-label">平均掌握</div></div></div>';
+
+  // 雷达图
+  html += '<div class="radar-wrap"><h3>📊 五维能力雷达图</h3><div class="radar-subtitle">根据概念理解、答题速度、正确率等综合评估</div><div class="radar-canvas-wrap"><canvas class="radar-chart" id="radarCanvas" width="440" height="440"></canvas></div></div>';
+
+  // 答题速度
+  html += '<div class="time-bar-wrap"><h3>⏱️ 答题速度分析</h3>';
+  for (var i = 0; i < timeData.length; i++) {
+    var t = timeData[i];
+    var p = Math.min(100, Math.round((t.time / t.limit) * 100));
+    var cls = p <= 50 ? 'fast' : p <= 80 ? 'normal' : 'slow';
+    html += '<div class="time-bar-item"><div class="time-bar-label">' + t.name + '</div><div class="time-bar-track"><div class="time-bar-fill ' + cls + '" style="width:' + p + '%">' + t.time + 's</div></div></div>';
+  }
+  html += '</div>';
+
+  // 逐题详情（不展示对错标识、不展示得分）
+  html += '<div class="detail-section"><h3>📋 逐题详情</h3>';
+  for (var i = 0; i < data.answers.length; i++) {
+    var a = data.answers[i];
+    if (!a) continue;
+    var q = QUIZ_CONFIG.questions[i];
+    var yourAns = '未作答';
+    if (a.isSkip) {
+      yourAns = '跳过';
+    } else if (q.questionType === 'choice') {
+      yourAns = a.selected >= 0 ? ['A','B','C','D'][a.selected] : '未作答';
+    } else {
+      yourAns = a.selected || '未作答';
+    }
+    var correctAns = q.questionType === 'choice' ? ['A','B','C','D'][q.answer] : q.answer;
+    html += '<div class="detail-item"><div class="detail-body"><div class="detail-q">第' + (i+1) + '题 · ' + q.label + '</div><div class="detail-meta"><span class="detail-tag ' + q.type + '">' + (q.type === 'concept' ? '概念' : '挑战') + '</span><span>你的答案：' + yourAns + '</span><span>正确答案：' + correctAns + '</span><span>用时' + a.timeUsed + 's</span></div>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  // 总评模块
+  var conclusion = getRandomConclusion(data);
+  html += '<div class="conclusion-section"><h3>📝 总评</h3><div class="conclusion-text">' + conclusion + '</div><div class="conclusion-cta">📸 记得截图发给途途老师，获取专属的深度分析指导哦！</div></div>';
+
+  $('resultContent').innerHTML = html;
+
+  setTimeout(function() { drawRadar('radarCanvas', radarLabels, radarValues); }, 200);
+}
+
+// ===== 雷达图 =====
+function drawRadar(canvasId, labels, values) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 90;
+  var n = labels.length;
+  var step = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, W, H);
+
+  for (var lv = 1; lv <= 4; lv++) {
+    var r = R * lv / 4;
+    ctx.beginPath();
+    for (var i = 0; i <= n; i++) {
+      var angle = i * step - Math.PI / 2;
+      var x = cx + r * Math.cos(angle);
+      var y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,122,69,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,122,69,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  for (var i = 0; i <= n; i++) {
+    var idx = i % n;
+    var angle = idx * step - Math.PI / 2;
+    var r = R * (values[idx] / 100);
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,122,69,0.18)';
+  ctx.fill();
+  ctx.strokeStyle = '#FF7A45';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    var r = R * (values[i] / 100);
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FF7A45';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    var lx = cx + (R + 34) * Math.cos(angle);
+    var ly = cy + (R + 34) * Math.sin(angle);
+    var cosA = Math.cos(angle);
+    if (Math.abs(cosA) < 0.15) {
+      ctx.textAlign = 'center';
+    } else if (cosA > 0) {
+      ctx.textAlign = 'left';
+    } else {
+      ctx.textAlign = 'right';
+    }
+    ctx.fillStyle = '#3D2817';
+    ctx.fillText(labels[i], lx, ly - 7);
+    ctx.fillStyle = '#FF7A45';
+    ctx.font = 'bold 11px "PingFang SC",sans-serif';
+    ctx.fillText(values[i] + '%', lx, ly + 9);
+    ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+  }
+}
+</script>
+</body>
+</html>

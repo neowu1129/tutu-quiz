@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>测评管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","HarmonyOS Sans SC",-apple-system,sans-serif;background:#FFF8E7;color:#3D2817;font-size:18px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,textarea,select{font-family:inherit}
+:root{--orange:#FF7A45;--orange-light:#FF9F66;--yellow:#FFC93C;--cream:#FFF8E7;--cream-deep:#FCEFD5;--red:#E84855;--green:#7BC4A4;--green-deep:#4A9B6E;--brown:#3D2817;--brown-light:#5D3A1A;--shadow:0 4px 16px rgba(255,122,69,.12);--shadow-hover:0 8px 24px rgba(255,122,69,.25)}
+
+/* ===== 管理端头部 ===== */
+.admin-header{position:sticky;top:0;z-index:50;background:rgba(255,248,231,.95);backdrop-filter:blur(8px);padding:16px 20px;border-bottom:1px solid var(--cream-deep)}
+.admin-header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.admin-title{font-size:22px;font-weight:800;color:var(--brown)}
+.admin-header-actions{display:flex;align-items:center;gap:8px}
+.admin-search{display:flex;align-items:center;gap:8px;background:white;border:2px solid var(--cream-deep);border-radius:14px;padding:8px 14px;flex:1;max-width:300px;transition:all .2s}
+.admin-search:focus-within{border-color:var(--orange)}
+.admin-search input{border:none;outline:none;font-size:15px;flex:1;background:transparent}
+.admin-search-icon{font-size:18px;color:#8B8680}
+.icon-btn{width:40px;height:40px;border-radius:12px;background:white;border:2px solid var(--cream-deep);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .2s;flex-shrink:0}
+.icon-btn:hover{border-color:var(--orange);background:#FFF0E8}
+
+.admin-tabs{display:flex;gap:8px;max-width:960px;margin:16px auto 0;padding:0 20px}
+.admin-tab{padding:8px 18px;border-radius:100px;font-size:14px;font-weight:700;color:#8B8680;background:var(--cream-deep);transition:all .2s}
+.admin-tab.active{background:var(--orange);color:white}
+
+/* ===== 远程状态栏 ===== */
+.remote-bar{max-width:960px;margin:12px auto 0;padding:0 20px}
+.remote-bar-inner{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;font-size:14px;font-weight:600}
+.remote-bar-inner.connected{background:#E8F5EC;color:var(--green-deep)}
+.remote-bar-inner.disconnected{background:#FCE8EA;color:var(--red)}
+.remote-bar-inner .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.remote-bar-inner.connected .dot{background:var(--green)}
+.remote-bar-inner.disconnected .dot{background:var(--red)}
+.remote-bar-actions{margin-left:auto;display:flex;gap:8px}
+.remote-bar-btn{padding:5px 14px;border-radius:100px;font-size:12px;font-weight:700;transition:all .2s;cursor:pointer}
+.remote-bar-btn.link{background:var(--orange);color:white}
+.remote-bar-btn.link:hover{opacity:.85}
+.remote-bar-btn.refresh{background:white;color:var(--brown);border:1px solid var(--cream-deep)}
+.remote-bar-btn.refresh:hover{border-color:var(--orange)}
+
+/* ===== 设置面板 ===== */
+.setup-panel{max-width:960px;margin:16px auto 0;padding:0 20px}
+.setup-card{background:white;border-radius:24px;padding:28px 24px;box-shadow:var(--shadow)}
+.setup-card h3{font-size:20px;font-weight:800;color:var(--brown);margin-bottom:6px}
+.setup-card .setup-desc{font-size:14px;color:#8B8680;margin-bottom:20px;line-height:1.7}
+.setup-field{margin-bottom:16px}
+.setup-field label{display:block;font-size:14px;font-weight:700;color:var(--brown);margin-bottom:6px}
+.setup-field input{width:100%;border:2px solid var(--cream-deep);border-radius:14px;padding:12px 16px;font-size:15px;outline:none;background:var(--cream);transition:all .2s}
+.setup-field input:focus{border-color:var(--orange);background:white}
+.setup-field .field-hint{font-size:12px;color:#8B8680;margin-top:4px;line-height:1.5}
+.setup-field .field-hint a{color:var(--orange);text-decoration:none;font-weight:600}
+.setup-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.setup-btn{padding:12px 24px;border-radius:14px;font-size:15px;font-weight:700;transition:all .2s}
+.setup-btn.primary{background:linear-gradient(135deg,var(--orange),var(--orange-light));color:white;box-shadow:var(--shadow)}
+.setup-btn.primary:hover{transform:translateY(-1px)}
+.setup-btn.secondary{background:var(--cream-deep);color:var(--brown)}
+.setup-btn.secondary:hover{background:var(--cream)}
+.setup-steps{background:var(--cream);border-radius:16px;padding:18px 20px;margin-bottom:20px}
+.setup-steps h4{font-size:15px;font-weight:700;color:var(--orange);margin-bottom:10px}
+.setup-steps ol{font-size:14px;color:var(--brown);line-height:1.8;padding-left:20px}
+.setup-steps ol li{margin-bottom:4px}
+.setup-steps ol a{color:var(--orange);text-decoration:none;font-weight:600}
+
+/* ===== 管理端内容 ===== */
+.admin-body{max-width:960px;margin:0 auto;padding:16px 20px}
+.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.admin-stat-card{background:white;border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.admin-stat-num{font-size:28px;font-weight:800;color:var(--orange)}
+.admin-stat-label{font-size:12px;color:#8B8680;margin-top:2px}
+
+.student-list{display:flex;flex-direction:column;gap:10px}
+.student-row{background:white;border-radius:18px;padding:16px 20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;border:2px solid transparent}
+.student-row:hover{border-color:var(--orange);transform:translateY(-1px)}
+.student-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--yellow));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px;flex-shrink:0}
+.student-info{flex:1;min-width:0}
+.student-name{font-size:17px;font-weight:700;color:var(--brown)}
+.student-meta{font-size:13px;color:#8B8680}
+.student-correct{font-size:18px;font-weight:800;color:var(--orange)}
+.student-time{font-size:12px;color:#8B8680}
+.empty-state{text-align:center;padding:60px 20px;color:#8B8680}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:16px}
+.loading-state{text-align:center;padding:40px 20px;color:#8B8680}
+.loading-state .spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--cream-deep);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 管理端-学生详情 */
+.admin-detail-back{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--orange);margin-bottom:16px;cursor:pointer}
+.admin-detail-back:hover{opacity:.7}
+.admin-detail-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.admin-detail-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--yellow));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:22px;flex-shrink:0}
+.admin-detail-info h2{font-size:22px;font-weight:800;color:var(--brown)}
+.admin-detail-info p{font-size:14px;color:#8B8680}
+.admin-download-btn{margin-left:auto;padding:10px 20px;background:linear-gradient(135deg,var(--orange),var(--orange-light));color:white;border-radius:14px;font-size:14px;font-weight:700;transition:all .2s;flex-shrink:0}
+.admin-download-btn:hover{transform:translateY(-1px)}
+
+/* 链接弹窗 */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-card{background:white;border-radius:24px;padding:28px 24px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:scaleIn .3s ease}
+@keyframes scaleIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-card h3{font-size:20px;font-weight:800;color:var(--brown);margin-bottom:6px}
+.modal-card .modal-desc{font-size:14px;color:#8B8680;margin-bottom:16px}
+.modal-link-box{display:flex;gap:8px;align-items:stretch}
+.modal-link-input{flex:1;border:2px solid var(--cream-deep);border-radius:14px;padding:12px 14px;font-size:13px;outline:none;background:var(--cream);resize:none;min-height:80px;line-height:1.5;word-break:break-all}
+.modal-copy-btn{padding:12px 20px;background:linear-gradient(135deg,var(--orange),var(--orange-light));color:white;border-radius:14px;font-size:14px;font-weight:700;transition:all .2s;white-space:nowrap;align-self:flex-end}
+.modal-copy-btn:hover{transform:translateY(-1px)}
+.modal-close{margin-top:16px;width:100%;padding:12px;border-radius:14px;font-size:15px;font-weight:700;background:var(--cream-deep);color:var(--brown);transition:all .2s}
+.modal-close:hover{background:var(--cream)}
+
+/* 结果页样式 */
+.radar-wrap{background:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.radar-wrap h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.radar-subtitle{font-size:13px;color:#8B8680;margin-bottom:12px;padding-left:2px}
+.radar-canvas-wrap{display:flex;justify-content:center}
+canvas.radar-chart{max-width:360px;max-height:360px}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.stat-card{background:white;border-radius:18px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.stat-num{font-size:26px;font-weight:800;color:var(--orange)}
+.stat-label{font-size:12px;color:#8B8680;margin-top:2px}
+.time-bar-wrap{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.time-bar-wrap h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.time-bar-item{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.time-bar-label{width:60px;font-size:13px;font-weight:600;color:var(--brown);flex-shrink:0;text-align:right}
+.time-bar-track{flex:1;height:16px;background:var(--cream-deep);border-radius:100px;overflow:hidden}
+.time-bar-fill{height:100%;border-radius:100px;transition:width 1s ease;font-size:10px;font-weight:700;color:white;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:24px}
+.time-bar-fill.fast{background:linear-gradient(90deg,var(--green),#5DD4A0)}
+.time-bar-fill.normal{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+.time-bar-fill.slow{background:linear-gradient(90deg,var(--red),#F06868)}
+.time-bar-limit{font-size:11px;color:#8B8680;width:30px;text-align:left}
+.detail-section{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.detail-section h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.detail-item{padding:12px 0;border-bottom:1px solid var(--cream-deep);display:flex;gap:12px;align-items:flex-start}
+.detail-item:last-child{border-bottom:none}
+.detail-body{flex:1;min-width:0}
+.detail-q{font-size:15px;font-weight:600;color:var(--brown);margin-bottom:4px}
+.detail-meta{font-size:13px;color:#8B8680;display:flex;gap:10px;flex-wrap:wrap}
+.detail-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.detail-tag.concept{background:#FFF4D6;color:#B88600}
+.detail-tag.trap{background:#FCE8EA;color:var(--red)}
+.diag-section{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.diag-section h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.diag-bar-list{display:flex;flex-direction:column;gap:10px}
+.diag-bar-item{display:flex;align-items:center;gap:10px}
+.diag-bar-label{width:100px;font-size:14px;font-weight:600;color:var(--brown);flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.diag-bar-track{flex:1;height:20px;background:var(--cream-deep);border-radius:100px;overflow:hidden;position:relative}
+.diag-bar-fill{height:100%;border-radius:100px;transition:width 1s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:700;color:white;min-width:28px}
+.diag-bar-fill.high{background:linear-gradient(90deg,var(--green),#5DD4A0)}
+.diag-bar-fill.mid{background:linear-gradient(90deg,var(--yellow),var(--orange))}
+.diag-bar-fill.low{background:linear-gradient(90deg,var(--red),#F06868)}
+
+/* 深度分析模块 */
+.analysis-card{background:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.analysis-card h3{font-size:18px;font-weight:800;color:var(--brown);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.analysis-item{padding:12px 14px;background:var(--cream);border-radius:14px;margin-bottom:10px;font-size:14px;color:var(--brown);line-height:1.7;display:flex;gap:10px;align-items:flex-start}
+.analysis-item:last-child{margin-bottom:0}
+.analysis-item .a-icon{font-size:18px;flex-shrink:0;margin-top:2px}
+.analysis-item .a-text{flex:1}
+.copy-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;background:var(--cream-deep);border-radius:100px;font-size:12px;font-weight:700;color:var(--brown);cursor:pointer;transition:all .2s;border:none;margin-top:10px}
+.copy-btn:hover{background:var(--orange);color:white}
+.copy-btn.copied{background:var(--green);color:white}
+
+.course-card{background:linear-gradient(135deg,#FFF0E8,#FFF8E7);border-radius:24px;padding:24px;margin-bottom:16px;border:2px solid var(--cream-deep)}
+.course-card h3{font-size:18px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.course-card.subtle h3{color:var(--brown)}
+.course-card.direct h3{color:var(--orange)}
+.course-text{font-size:15px;color:var(--brown);line-height:1.8;padding:14px;background:white;border-radius:14px;margin-bottom:10px}
+
+.result-header{text-align:center;padding:24px 0 16px}
+.result-header h1{font-size:24px;font-weight:800;color:var(--brown)}
+.result-header p{font-size:15px;color:#8B8680;margin-top:4px}
+
+@media(max-width:600px){
+  .admin-stats{grid-template-columns:1fr 1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .admin-header-inner{flex-wrap:wrap}
+  .admin-search{max-width:100%;order:2;width:100%}
+  .admin-detail-header{flex-direction:column;align-items:flex-start}
+  .admin-download-btn{margin-left:0}
+  .modal-link-box{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="admin-header">
+  <div class="admin-header-inner">
+    <div class="admin-title">📊 测评管理后台</div>
+    <div class="admin-header-actions">
+      <div class="admin-search">
+        <span class="admin-search-icon">🔍</span>
+        <input id="adminSearchInput" placeholder="搜索学生姓名…" autocomplete="off">
+      </div>
+      <button class="icon-btn" id="btnRefresh" title="刷新数据">🔄</button>
+      <button class="icon-btn" id="btnDemo" title="加载示例数据">🎲</button>
+      <button class="icon-btn" id="btnSetup" title="远程设置">⚙️</button>
+    </div>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab active" id="tabList">学生列表</button>
+    <button class="admin-tab" id="tabDetail" style="display:none">学生详情</button>
+  </div>
+</div>
+
+<!-- 远程状态栏 -->
+<div class="remote-bar" id="remoteBar"></div>
+
+<!-- 设置面板 -->
+<div class="setup-panel" id="setupPanel" style="display:none"></div>
+
+<!-- 主体 -->
+<div class="admin-body" id="adminBody"></div>
+
+<script>
+// ============================================================
+// ===== 远程存储模块 =====
+// ============================================================
+var RemoteStore = {
+  _cfg: null,
+  init: function() {
+    try {
+      var saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+      if (saved && saved.key && saved.bin) this._cfg = saved;
+    } catch(e) {}
+  },
+  ready: function() { return !!this._cfg; },
+  getConfig: function() { return this._cfg; },
+  setConfig: function(key, bin) {
+    this._cfg = { key: key, bin: bin };
+    localStorage.setItem('quiz_rc_admin', JSON.stringify(this._cfg));
+  },
+  clearConfig: function() {
+    this._cfg = null;
+    localStorage.removeItem('quiz_rc_admin');
+  },
+  loadAll: function() {
+    if (!this.ready()) return Promise.resolve([]);
+    var url = 'https://api.jsonbin.io/v3/b/' + this._cfg.bin + '/latest';
+    return fetch(url, { headers: { 'X-Master-Key': this._cfg.key } })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data) { return Array.isArray(data.record) ? data.record : []; })
+      .catch(function() { return []; });
+  },
+  makeStudentLink: function() {
+    if (!this.ready()) return '';
+    var base = window.location.href.replace(/admin\.html.*$/, 'index.html');
+    var encoded = btoa(JSON.stringify({ k: this._cfg.key, b: this._cfg.bin }));
+    return base + '?rc=' + encodeURIComponent(encoded);
+  }
+};
+
+// ===== 工具函数 =====
+function $(id) { return document.getElementById(id); }
+function getLocalResults() { try { return JSON.parse(localStorage.getItem('quiz_results_v2') || '[]'); } catch(e) { return []; } }
+
+// ===== 状态 =====
+var currentView = 'list';
+var cachedRemoteResults = null;
+
+// ============================================================
+// ===== 配置（与学生端一致） =====
+// ============================================================
+var QUIZ_CONFIG = {
+  grade: "一升二",
+  subject: "数学思维",
+  lessons: [
+    { id:1, name:"计算认知", tag:"计算", desc:"从加法到乘法的转换，理解乘法含义" },
+    { id:2, name:"几何空间", tag:"几何", desc:"立体图形认知，空间感知，面的观察" },
+    { id:3, name:"逻辑比较", tag:"逻辑", desc:"比轻重，有序比较，同增同减" },
+    { id:4, name:"组合问题", tag:"应用", desc:"有序思考，两两组合" },
+    { id:5, name:"推理思维", tag:"逻辑", desc:"排除推理，根据条件逐步推断" }
+  ],
+  questions: [
+    { lessonId:1, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"2+2+2=6，你觉得下面哪种写法能表示这个式子？", options:["3+3=6","2×3=6","3×2=6","B和C都对"], answer:3, explain:"2+2+2是3个2相加，可以写成2×3=6或3×2=6。两种写法都对！" },
+    { lessonId:1, type:"trap", label:"易错题", timeLimit:50, questionType:"input", inputMode:"number", text:"5个3相加后，再加上3个5是多少？", answer:"30", explain:"5个3相加=15，3个5相加=15，合起来15+15=30" },
+    { lessonId:2, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"两个六面正方体骰子面对面粘在一起，能不能通过观察就知道粘起来的是哪两个面？", options:["能","不能"], answer:1, explain:"粘合的那两个面被藏在中间，从外面看不到" },
+    { lessonId:2, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"以下四句话中哪几句是错的？（1）正方形由4条相等的线段组成，正方体由4个完全相同的正方形围成；（2）球体和长方体可以拼成圆柱体；（3）球体无论从哪个面看都是一样的", options:["（1）（2）","（2）（3）","（1）（3）","（1）（2）（3）"], answer:0, explain:"（1）错——正方体由6个面围成不是4个（2）错——拼不出圆柱（3）对——球体各方向都是圆" },
+    { lessonId:3, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"小明比小红多3颗糖。各吃掉1颗，现在多几颗？", options:["多5颗","多3颗","多2颗","一样多"], answer:1, explain:"同减不改变差！还是多3颗" },
+    { lessonId:3, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"①A比B重 ②B比C重 ③D比A轻。最轻的是谁？", options:["A","B","C","D"], answer:2, explain:"A>B>C，D比A轻但D和B、C不确定，最轻的是C" },
+    { lessonId:4, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"3个同学见面，每两人握一次手，共握几次？", options:["2次","3次","4次","6次"], answer:1, explain:"打枪法：2+1=3次" },
+    { lessonId:4, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"4个球队参加比赛，每两队必须比赛一次，一共要比几次？", options:["4次","5次","6次","8次"], answer:2, explain:"3+2+1=6次" },
+    { lessonId:5, type:"concept", label:"易混淆概念", timeLimit:25, questionType:"choice", text:"甲乙丙分别来自北京上海广州。甲不是北京，乙不是北京也不是上海。乙来自？", options:["北京","上海","广州","无法确定"], answer:2, explain:"乙不是北京也不是上海→乙=广州" },
+    { lessonId:5, type:"trap", label:"易错题", timeLimit:50, questionType:"choice", text:"王李张分别教语文数学英语。王不教语文，李不教数学，张教英语。王教什么？", options:["语文","数学","英语"], answer:1, explain:"张=英语，王不教语文→王=数学" }
+  ]
+};
+
+// ============================================================
+// ===== 远程状态栏渲染 =====
+// ============================================================
+function renderRemoteBar() {
+  var bar = $('remoteBar');
+  if (!bar) return;
+  if (RemoteStore.ready()) {
+    bar.innerHTML = '<div class="remote-bar-inner connected"><span class="dot"></span><span>云端已连接 · 数据自动同步中</span><div class="remote-bar-actions"><button class="remote-bar-btn link" id="btnGetLink">📋 获取测评链接</button></div></div>';
+    var linkBtn = $('btnGetLink');
+    if (linkBtn) linkBtn.addEventListener('click', showLinkModal);
+  } else {
+    bar.innerHTML = '<div class="remote-bar-inner disconnected"><span class="dot"></span><span>未连接云端 · 仅显示本机数据</span><div class="remote-bar-actions"><button class="remote-bar-btn link" id="btnGoSetup">去配置 →</button></div></div>';
+    var setupBtn = $('btnGoSetup');
+    if (setupBtn) setupBtn.addEventListener('click', function() { toggleSetup(true); });
+  }
+}
+
+// ============================================================
+// ===== 设置面板 =====
+// ============================================================
+var setupVisible = false;
+function toggleSetup(force) {
+  setupVisible = (force !== undefined) ? force : !setupVisible;
+  var panel = $('setupPanel');
+  if (!panel) return;
+  if (!setupVisible) { panel.style.display = 'none'; return; }
+
+  var cfg = RemoteStore.getConfig();
+  var html = '<div class="setup-card">';
+  html += '<h3>⚙️ 远程数据设置</h3>';
+  html += '<div class="setup-desc">配置云端存储后，学生在各自设备答题的数据会自动同步到这里。</div>';
+
+  if (!cfg) {
+    html += '<div class="setup-steps"><h4>📌 三步配置</h4><ol>';
+    html += '<li>访问 <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> 免费注册</li>';
+    html += '<li>登录后复制 <b>X-Master-Key</b></li>';
+    html += '<li>点击 <b>"Create Bin"</b>，内容输入 <code>[]</code>，然后复制 <b>Bin ID</b></li>';
+    html += '</ol></div>';
+    html += '<div class="setup-field"><label>API Key</label>';
+    html += '<input id="setupApiKey" placeholder="粘贴你的 X-Master-Key">';
+    html += '<div class="field-hint">在 <a href="https://jsonbin.io/api-keys" target="_blank">jsonbin.io/api-keys</a> 获取</div></div>';
+    html += '<div class="setup-field"><label>Bin ID</label>';
+    html += '<input id="setupBinId" placeholder="粘贴你的 Bin ID"></div>';
+    html += '<div class="setup-actions">';
+    html += '<button class="setup-btn primary" id="setupSave">✓ 保存配置</button>';
+    html += '<button class="setup-btn secondary" id="setupCancel">取消</button>';
+    html += '</div>';
+  } else {
+    html += '<div style="background:#E8F5EC;border-radius:14px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--green-deep);line-height:1.7">';
+    html += '✓ 云端已配置<br><span style="font-size:12px;color:#8B8680">Bin ID: ' + cfg.bin.substring(0, 12) + '...</span></div>';
+    html += '<div class="setup-actions">';
+    html += '<button class="setup-btn primary" id="btnGetLinkFromSetup">📋 获取测评链接</button>';
+    html += '<button class="setup-btn secondary" id="btnResetCfg">重置配置</button>';
+    html += '<button class="setup-btn secondary" id="setupCancel2">关闭</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+
+  if (!cfg) {
+    var saveBtn = $('setupSave');
+    if (saveBtn) saveBtn.addEventListener('click', function() {
+      var key = $('setupApiKey').value.trim();
+      var bin = $('setupBinId').value.trim();
+      if (!key || !bin) { alert('请填写 API Key 和 Bin ID'); return; }
+      RemoteStore.setConfig(key, bin);
+      toggleSetup(false);
+      renderRemoteBar();
+      loadAndRender();
+    });
+  } else {
+    var linkBtn2 = $('btnGetLinkFromSetup');
+    if (linkBtn2) linkBtn2.addEventListener('click', showLinkModal);
+    var resetBtn = $('btnResetCfg');
+    if (resetBtn) resetBtn.addEventListener('click', function() {
+      if (confirm('确定要重置云端配置吗？')) {
+        RemoteStore.clearConfig();
+        toggleSetup(false);
+        renderRemoteBar();
+        loadAndRender();
+      }
+    });
+  }
+  var cancelBtns = [$('setupCancel'), $('setupCancel2')];
+  for (var i = 0; i < cancelBtns.length; i++) {
+    if (cancelBtns[i]) cancelBtns[i].addEventListener('click', function() { toggleSetup(false); });
+  }
+}
+
+// ============================================================
+// ===== 测评链接弹窗 =====
+// ============================================================
+function showLinkModal() {
+  var link = RemoteStore.makeStudentLink();
+  if (!link) { alert('请先配置远程存储'); return; }
+
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = '<div class="modal-card"><h3>📋 学生测评链接</h3><div class="modal-desc">把这个链接发给学生，答题数据会自动同步到云端。</div><div class="modal-link-box"><textarea class="modal-link-input" readonly id="modalLinkText">' + link + '</textarea><button class="modal-copy-btn" id="modalCopyBtn">复制链接</button></div><button class="modal-close" id="modalCloseBtn">关闭</button></div>';
+  document.body.appendChild(overlay);
+
+  setTimeout(function() {
+    var textarea = $('modalLinkText');
+    if (textarea) { textarea.focus(); textarea.select(); }
+  }, 100);
+
+  $('modalCopyBtn').addEventListener('click', function() {
+    var textarea = $('modalLinkText');
+    if (textarea) {
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        $('modalCopyBtn').textContent = '已复制 ✓';
+        setTimeout(function() { $('modalCopyBtn').textContent = '复制链接'; }, 2000);
+      } catch(e) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(link).then(function() {
+            $('modalCopyBtn').textContent = '已复制 ✓';
+            setTimeout(function() { $('modalCopyBtn').textContent = '复制链接'; }, 2000);
+          });
+        }
+      }
+    }
+  });
+
+  $('modalCloseBtn').addEventListener('click', function() { document.body.removeChild(overlay); });
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+}
+
+// ============================================================
+// ===== 数据加载与渲染 =====
+// ============================================================
+function loadAndRender() {
+  var keyword = $('adminSearchInput') ? $('adminSearchInput').value.trim() : '';
+  if (RemoteStore.ready()) {
+    $('adminBody').innerHTML = '<div class="loading-state"><div class="spinner"></div><p>正在从云端加载数据…</p></div>';
+    RemoteStore.loadAll().then(function(remoteData) {
+      cachedRemoteResults = remoteData;
+      var localData = getLocalResults();
+      var allData = mergeResults(remoteData, localData);
+      renderList(allData, keyword);
+    });
+  } else {
+    renderList(getLocalResults(), keyword);
+  }
+}
+
+function mergeResults(remote, local) {
+  var map = {};
+  var result = [];
+  function add(r) {
+    var key = r.name + '_' + r.timestamp;
+    if (!map[key]) { map[key] = true; result.push(r); }
+  }
+  for (var i = 0; i < remote.length; i++) add(remote[i]);
+  for (var i = 0; i < local.length; i++) add(local[i]);
+  return result;
+}
+
+// ============================================================
+// ===== 管理端渲染 =====
+// ============================================================
+function renderList(allResults, keyword) {
+  var filtered = keyword ? allResults.filter(function(r) {
+    return r.name.toLowerCase().indexOf(keyword.toLowerCase()) >= 0;
+  }) : allResults.slice();
+
+  filtered.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+  var totalStudents = allResults.length;
+  var avgCorrect = totalStudents > 0 ? (allResults.reduce(function(s, r) { return s + r.correctCount; }, 0) / totalStudents).toFixed(1) : 0;
+  var maxCorrect = totalStudents > 0 ? Math.max.apply(null, allResults.map(function(r) { return r.correctCount; })) : 0;
+  var avgTime = totalStudents > 0 ? Math.round(allResults.reduce(function(s, r) { return s + r.totalTime; }, 0) / totalStudents) : 0;
+
+  var html = '';
+  html += '<div class="admin-stats">';
+  html += '<div class="admin-stat-card"><div class="admin-stat-num">' + totalStudents + '</div><div class="admin-stat-label">参测学生</div></div>';
+  html += '<div class="admin-stat-card"><div class="admin-stat-num">' + avgCorrect + '</div><div class="admin-stat-label">平均答对</div></div>';
+  html += '<div class="admin-stat-card"><div class="admin-stat-num">' + maxCorrect + '/10</div><div class="admin-stat-label">最多答对</div></div>';
+  html += '<div class="admin-stat-card"><div class="admin-stat-num">' + avgTime + 's</div><div class="admin-stat-label">平均用时</div></div>';
+  html += '</div>';
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">📭</div><p>' + (keyword ? '没有找到"' + keyword + '"的测评记录' : '暂无测评记录') + '</p>';
+    if (!keyword && !RemoteStore.ready()) {
+      html += '<p style="font-size:14px;margin-top:8px;color:var(--orange)">💡 配置远程存储后，学生答题数据会自动同步到这里</p>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div class="student-list">';
+    for (var idx = 0; idx < filtered.length; idx++) {
+      var r = filtered[idx];
+      var initial = r.name.charAt(0);
+      var date = new Date(r.timestamp).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      html += '<div class="student-row" data-ts="' + r.timestamp + '" data-name="' + r.name + '">';
+      html += '<div class="student-avatar">' + initial + '</div>';
+      html += '<div class="student-info"><div class="student-name">' + r.name + '</div><div class="student-meta">' + (r.grade || '一升二') + ' · ' + date + '</div></div>';
+      html += '<div><div class="student-correct">答对' + r.correctCount + '/10</div><div class="student-time">用时' + r.totalTime + 's</div></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  $('adminBody').innerHTML = html;
+
+  var rows = document.querySelectorAll('.student-row');
+  for (var i = 0; i < rows.length; i++) {
+    rows[i].addEventListener('click', function() {
+      var ts = parseInt(this.dataset.ts);
+      var nm = this.dataset.name;
+      var found = null;
+      for (var j = 0; j < allResults.length; j++) {
+        if (allResults[j].timestamp === ts && allResults[j].name === nm) { found = allResults[j]; break; }
+      }
+      if (found) renderDetail(found, allResults);
+    });
+  }
+}
+
+// ============================================================
+// ===== 深度分析模块 =====
+// ============================================================
+
+// 各模块的优势能力分析
+var STRENGTH_ANALYSIS = {
+  1: [
+    "在计算认知方面表现出色，对乘法的基本含义理解到位，说明数的感觉很好",
+    "计算认知能力扎实，能够准确理解加法与乘法的转换关系，这是非常重要的数学基础能力",
+    "展现了很好的数感和运算直觉，对于从加法到乘法的概念转换掌握得不错"
+  ],
+  2: [
+    "空间想象力很强，对立体图形的认知超出了同龄孩子的平均水平",
+    "几何空间感很好，能够理解三维空间中面的关系，这对后续学习几何非常有利",
+    "在图形观察和空间感知方面展现了不错的天赋，对立体结构的理解比较清晰"
+  ],
+  3: [
+    "逻辑比较能力出色，能够准确判断大小关系并运用推理，思维很清晰",
+    "在逻辑推理的链条上表现很好，能够抓住'同增同减'这类核心规律",
+    "比较分析能力很强，对有序思考和逻辑链条的把握很不错"
+  ],
+  4: [
+    "组合思维很好，能够有序地列举所有可能性，这是解决问题的关键能力",
+    "在有序思考方面表现出色，能够系统地分析两两组合的关系",
+    "应用题的解题思路清晰，能够把生活场景转化为数学模型"
+  ],
+  5: [
+    "推理思维能力很强，能够运用排除法逐步缩小范围，逻辑链条完整",
+    "在信息推理方面表现突出，能够根据多个条件交叉分析得出结论",
+    "逻辑推理能力扎实，对表格法、排除法的运用很到位"
+  ]
+};
+
+// 各模块的薄弱分析 + 对二三年级的影响
+var WEAKNESS_ANALYSIS = {
+  1: [
+    {
+      weak: "在计算认知方面还需要加强，特别是对乘法含义的理解。孩子可能对'几个相同数相加'这个概念还不够清晰",
+      impact2: "二年级上学期会系统学习乘法口诀，如果基础概念不牢固，背诵口诀时会缺乏理解支撑",
+      impact3: "三年级涉及多位数乘除法，计算认知是整个运算体系的基石，需要尽早补齐"
+    }
+  ],
+  2: [
+    {
+      weak: "几何空间感还需要培养，对立体图形的观察和分析还不够细致，容易被表面现象迷惑",
+      impact2: "二年级会学习更多图形认知内容，包括图形的拼组和分割",
+      impact3: "三年级开始接触面积、周长等几何计算，空间想象力是关键前提"
+    }
+  ],
+  3: [
+    {
+      weak: "在逻辑比较方面还需要练习，对'同增同减'等规律的理解还不够深入，容易在比较中被干扰",
+      impact2: "二年级的应用题中会大量出现比较类问题",
+      impact3: "三年级的差倍问题、和差问题都建立在比较思维的基础上"
+    }
+  ],
+  4: [
+    {
+      weak: "组合思维还需要锻炼，在有序列举方面不够系统，容易遗漏或重复",
+      impact2: "二年级的搭配、排列问题需要有序思考的能力",
+      impact3: "三年级的组合计数、概率初步都要求系统化的思维方式"
+    }
+  ],
+  5: [
+    {
+      weak: "推理思维能力需要加强，面对多条件推理时容易混乱，需要更多练习来建立分析框架",
+      impact2: "二年级的逻辑推理题会逐步增加复杂度",
+      impact3: "三年级的数学推理、条件分析是重点难点，需要扎实的推理基础"
+    }
+  ]
+};
+
+// 多维度交叉分析
+function getCrossAnalysis(data) {
+  var items = [];
+  var correctCount = data.correctCount;
+  var totalTime = data.totalTime;
+  var avgTimePerQ = totalTime / 10;
+
+  // 概念题 vs 挑战题对比
+  var conceptCorrect = 0, conceptTotal = 0, trapCorrect = 0, trapTotal = 0;
+  for (var i = 0; i < data.answers.length; i++) {
+    var a = data.answers[i];
+    if (!a) continue;
+    var q = QUIZ_CONFIG.questions[i];
+    if (q.type === 'concept') { conceptTotal++; if (a.isCorrect) conceptCorrect++; }
+    else { trapTotal++; if (a.isCorrect) trapCorrect++; }
+  }
+
+  if (conceptCorrect >= 4 && trapCorrect >= 3) {
+    items.push({ icon: '🌟', text: '概念理解力和实战应用力都很均衡，说明孩子不仅能理解知识点，还能灵活运用，这是非常难得的综合能力。' });
+  } else if (conceptCorrect >= 4 && trapCorrect < 3) {
+    items.push({ icon: '💡', text: '孩子的概念理解力不错，但在复杂场景下的应用能力还需要提升。建议在理解的基础上多做变式练习，把知识用活。' });
+  } else if (conceptCorrect < 4 && trapCorrect >= 3) {
+    items.push({ icon: '💡', text: '孩子在实战中展现了不错的直觉和灵活性，但部分基础概念还需要夯实。建议先回到课本，把每个概念理解透彻。' });
+  }
+
+  // 速度维度
+  if (avgTimePerQ < 15 && correctCount >= 7) {
+    items.push({ icon: '⚡', text: '答题又快又准，说明思维敏捷度高，对知识点的掌握已经达到了自动化水平，继续保持！' });
+  } else if (avgTimePerQ > 30 && correctCount >= 6) {
+    items.push({ icon: '🐢', text: '答题偏慢但正确率还不错，说明孩子在认真思考，只是需要更多练习来提升熟练度。速度会随着练习自然提高。' });
+  } else if (avgTimePerQ < 12 && correctCount < 5) {
+    items.push({ icon: '⚠️', text: '答题速度很快但正确率不高，可能存在审题不够仔细的情况。建议养成"读两遍题再动笔"的好习惯。' });
+  }
+
+  // 跳过行为分析
+  var skipCount = 0;
+  for (var i = 0; i < data.answers.length; i++) {
+    if (data.answers[i] && data.answers[i].isSkip) skipCount++;
+  }
+  if (skipCount >= 3) {
+    items.push({ icon: '📊', text: '有' + skipCount + '道题选择了跳过，说明在这些知识点上确实比较陌生。这恰恰是值得重点关注的学习方向——跳过不代表学不会，只是需要一个好老师来引导。' });
+  } else if (skipCount > 0) {
+    items.push({ icon: '📊', text: '有' + skipCount + '道题选择了跳过，这些跳过的题目对应的知识点是孩子当前最需要补齐的短板。' });
+  }
+
+  // 模块分布
+  var strongModules = [], weakModules = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    if (ls.correct >= 2) strongModules.push(l.name);
+    else if (ls.correct === 0) weakModules.push(l.name);
+  }
+
+  if (strongModules.length >= 3) {
+    items.push({ icon: '🏆', text: '在' + strongModules.join('、') + '等多个维度都表现出色，说明数学思维基础比较全面，具备很好的学习潜力。' });
+  }
+  if (weakModules.length >= 2) {
+    items.push({ icon: '🎯', text: '在' + weakModules.join('、') + '方面相对薄弱，这些知识点之间有内在联系，建议系统性地学习而不是逐个击破。' });
+  }
+
+  // 综合评价
+  if (correctCount >= 8) {
+    items.push({ icon: '⭐', text: '综合来看，孩子的数学思维基础非常扎实，具备冲击更高难度题目的能力。建议在巩固基础的同时，适当拓展思维深度。' });
+  } else if (correctCount >= 5) {
+    items.push({ icon: '⭐', text: '综合来看，孩子已经有了不错的思维基础，但在部分模块还需要针对性加强。如果能有专业老师帮助梳理知识体系，进步会非常快。' });
+  } else {
+    items.push({ icon: '⭐', text: '综合来看，孩子的数学思维体系还需要系统搭建。这个阶段最重要的是打好基础、建立信心，跟着专业老师一步步来，一定能看到明显的进步。' });
+  }
+
+  return items;
+}
+
+// 推课话术 - 委婉版
+function getSubtleCourseSuggestion(data) {
+  var name = data.name;
+  var strong = [], weak = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    if (ls.correct >= 2) strong.push(l.name);
+    else if (ls.correct === 0) weak.push(l.name);
+  }
+
+  var text = '从' + name + '的测评结果来看，孩子在' + (strong.length > 0 ? strong.join('、') + '方面已经展现了不错的基础' : '各方面都还有很大的成长空间');
+  if (weak.length > 0) {
+    text += '，同时在' + weak.join('、') + '方面还有一些知识点没有完全掌握。';
+  } else {
+    text += '。';
+  }
+  text += '这些知识点在二年级、三年级的学习中会越来越重要，如果现在能系统地梳理一遍，后续的学习会轻松很多。我们暑期正好有一套思维课程，正好覆盖这些内容，可以先让孩子试听一节课感受下，看看是否喜欢老师的风格。';
+
+  return text;
+}
+
+// 推课话术 - 直白版
+function getDirectCourseSuggestion(data) {
+  var name = data.name;
+  var correctCount = data.correctCount;
+  var weak = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    if (ls.correct === 0) weak.push(l.name);
+  }
+
+  var text = '';
+  if (correctCount <= 3) {
+    text = name + '这次测评答对了' + correctCount + '/10题，说明在数学思维的基础方面还有不少需要补齐的地方';
+    if (weak.length > 0) {
+      text += '，特别是' + weak.join('、') + '这几个模块基本还没有建立概念';
+    }
+    text += '。建议尽快报名我们的暑期思维课，系统地把这些知识点从零搭建起来。越早补齐基础，后续学习越不吃力。';
+  } else if (correctCount <= 6) {
+    text = name + '答对了' + correctCount + '/10题，有一定基础但薄弱环节明显';
+    if (weak.length > 0) {
+      text += '，' + weak.join('、') + '是需要重点突破的方向';
+    }
+    text += '。建议报名我们的暑期思维课，老师会针对这些薄弱点做专项训练，帮助孩子在新学期不掉队。';
+  } else {
+    text = name + '答对了' + correctCount + '/10题，基础很不错！但满分10题说明还有提升空间。';
+    text += '建议报名进阶思维课，在巩固现有基础上挑战更高难度，让孩子从"会"变成"又快又准"。';
+  }
+
+  return text;
+}
+
+// ============================================================
+// ===== 管理端学生详情 =====
+// ============================================================
+function renderDetail(data, allResults) {
+  currentView = 'detail';
+  $('tabList').style.display = 'none';
+  $('tabDetail').style.display = '';
+  $('tabDetail').classList.add('active');
+  $('tabList').classList.remove('active');
+
+  var correctCount = data.correctCount;
+  var accuracy = Math.round((correctCount / 10) * 100);
+
+  var radarLabels = [];
+  var radarValues = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    radarLabels.push(l.name);
+    var ls = data.lessonStats[l.id];
+    radarValues.push(Math.max(0, Math.min(100, Math.round((ls.correct / 2) * 100))));
+  }
+
+  var avgMastery = 0;
+  for (var i = 0; i < radarValues.length; i++) avgMastery += radarValues[i];
+  avgMastery = Math.round(avgMastery / radarValues.length);
+
+  var timeData = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    var limit = 0;
+    for (var j = 0; j < QUIZ_CONFIG.questions.length; j++) {
+      if (QUIZ_CONFIG.questions[j].lessonId === l.id) limit += QUIZ_CONFIG.questions[j].timeLimit;
+    }
+    timeData.push({ name: l.name, time: ls.totalTime, limit: limit });
+  }
+
+  // ===== 生成分析内容 =====
+  var strengthItems = [];
+  var weaknessItems = [];
+
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    if (ls.correct >= 1) {
+      var arr = STRENGTH_ANALYSIS[l.id];
+      strengthItems.push({ icon: '✅', text: arr[Math.floor(Math.random() * arr.length)] + '。' });
+    }
+    if (ls.correct < 2) {
+      var wArr = WEAKNESS_ANALYSIS[l.id];
+      var wItem = wArr[0];
+      weaknessItems.push({ icon: '📌', text: '【' + l.name + '】' + wItem.weak });
+      weaknessItems.push({ icon: '→', text: '对二年级的影响：' + wItem.impact2 });
+      weaknessItems.push({ icon: '→', text: '对三年级的影响：' + wItem.impact3 });
+    }
+  }
+
+  if (strengthItems.length === 0) {
+    strengthItems.push({ icon: '💪', text: '孩子勇敢地完成了所有题目，这份坚持和勇气本身就是很大的优势。接下来需要在老师的帮助下逐步建立知识体系。' });
+  }
+
+  var crossItems = getCrossAnalysis(data);
+  var subtleText = getSubtleCourseSuggestion(data);
+  var directText = getDirectCourseSuggestion(data);
+
+  // ===== 渲染HTML =====
+  var html = '';
+  html += '<div class="admin-detail-back" id="backToList">← 返回列表</div>';
+  html += '<div class="admin-detail-header">';
+  html += '<div class="admin-detail-avatar">' + data.name.charAt(0) + '</div>';
+  html += '<div class="admin-detail-info"><h2>' + data.name + ' 的深度分析报告</h2><p>' + (data.grade || '一升二') + ' · ' + data.subject + ' · ' + new Date(data.timestamp).toLocaleString('zh-CN') + '</p></div>';
+  html += '<button class="admin-download-btn" id="downloadReport">📥 下载报告</button>';
+  html += '</div>';
+
+  // === 基础数据 ===
+  html += '<div class="result-header"><h1>' + data.name + '的能力评估报告</h1><p>答对 ' + data.correctCount + '/10 · 总用时 ' + data.totalTime + 's · 平均掌握 ' + avgMastery + '%</p></div>';
+
+  html += '<div class="stat-grid">';
+  html += '<div class="stat-card"><div class="stat-num">' + data.correctCount + '/10</div><div class="stat-label">答对题数</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + data.totalTime + 's</div><div class="stat-label">总用时</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + avgMastery + '%</div><div class="stat-label">平均掌握</div></div>';
+  html += '</div>';
+
+  // === 雷达图 ===
+  html += '<div class="radar-wrap"><h3>📊 五维能力雷达图</h3><div class="radar-subtitle">根据概念理解、答题速度、正确率等综合评估</div><div class="radar-canvas-wrap"><canvas class="radar-chart" id="adminRadarCanvas" width="360" height="360"></canvas></div></div>';
+
+  // === 知识点掌握度 ===
+  var diagItems = [];
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    var mastery = Math.round((ls.correct / 2) * 100);
+    var level = mastery >= 100 ? 'high' : mastery >= 50 ? 'mid' : 'low';
+    diagItems.push({ name: l.name, tag: l.tag, mastery: mastery, level: level });
+  }
+  html += '<div class="diag-section"><h3>🎯 知识点掌握度</h3><div class="diag-bar-list">';
+  for (var i = 0; i < diagItems.length; i++) {
+    var d = diagItems[i];
+    html += '<div class="diag-bar-item"><div class="diag-bar-label">' + d.tag + '·' + d.name + '</div><div class="diag-bar-track"><div class="diag-bar-fill ' + d.level + '" style="width:' + d.mastery + '%">' + d.mastery + '%</div></div></div>';
+  }
+  html += '</div></div>';
+
+  // === 答题速度 ===
+  html += '<div class="time-bar-wrap"><h3>⏱️ 答题速度分析</h3>';
+  for (var i = 0; i < timeData.length; i++) {
+    var t = timeData[i];
+    var p = Math.min(100, Math.round((t.time / t.limit) * 100));
+    var cls = p <= 50 ? 'fast' : p <= 80 ? 'normal' : 'slow';
+    html += '<div class="time-bar-item"><div class="time-bar-label">' + t.name + '</div><div class="time-bar-track"><div class="time-bar-fill ' + cls + '" style="width:' + p + '%">' + t.time + 's</div></div></div>';
+  }
+  html += '</div>';
+
+  // === 逐题详情 ===
+  html += '<div class="detail-section"><h3>📋 逐题详情</h3>';
+  for (var i = 0; i < data.answers.length; i++) {
+    var a = data.answers[i];
+    if (!a) continue;
+    var q = QUIZ_CONFIG.questions[i];
+    var yourAns = '未作答';
+    if (a.isSkip) yourAns = '跳过';
+    else if (q.questionType === 'choice') yourAns = a.selected >= 0 ? ['A','B','C','D'][a.selected] : '未作答';
+    else yourAns = a.selected || '未作答';
+    var correctAns = q.questionType === 'choice' ? ['A','B','C','D'][q.answer] : q.answer;
+    var statusText = a.isSkip ? '⏭️跳过' : a.isCorrect ? '✅正确' : (a.isTimeout ? '⏰超时' : '❌错误');
+    html += '<div class="detail-item"><div class="detail-body"><div class="detail-q">第' + (i+1) + '题 · ' + q.label + ' · ' + statusText + '</div><div class="detail-meta"><span class="detail-tag ' + q.type + '">' + (q.type === 'concept' ? '概念' : '挑战') + '</span><span>答：' + yourAns + '</span><span>正确：' + correctAns + '</span><span>用时' + a.timeUsed + 's</span></div>';
+    if (q.explain) {
+      html += '<div style="font-size:13px;color:#5D3A1A;margin-top:6px;padding:8px 10px;background:#FFF8E7;border-radius:8px;line-height:1.6">📌 ' + q.explain + '</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  // === 深度分析：认知优势 ===
+  html += '<div class="analysis-card"><h3>🌟 认知优势分析</h3>';
+  for (var i = 0; i < strengthItems.length; i++) {
+    html += '<div class="analysis-item"><span class="a-icon">' + strengthItems[i].icon + '</span><span class="a-text">' + strengthItems[i].text + '</span></div>';
+  }
+  html += '<button class="copy-btn" data-copy="strength">📋 复制此段分析</button>';
+  html += '</div>';
+
+  // === 深度分析：薄弱环节 ===
+  html += '<div class="analysis-card"><h3>📌 薄弱环节分析 & 后续影响</h3>';
+  for (var i = 0; i < weaknessItems.length; i++) {
+    html += '<div class="analysis-item"><span class="a-icon">' + weaknessItems[i].icon + '</span><span class="a-text">' + weaknessItems[i].text + '</span></div>';
+  }
+  html += '<button class="copy-btn" data-copy="weakness">📋 复制此段分析</button>';
+  html += '</div>';
+
+  // === 深度分析：多维度交叉分析 ===
+  html += '<div class="analysis-card"><h3>🔍 多维度能力交叉分析</h3>';
+  for (var i = 0; i < crossItems.length; i++) {
+    html += '<div class="analysis-item"><span class="a-icon">' + crossItems[i].icon + '</span><span class="a-text">' + crossItems[i].text + '</span></div>';
+  }
+  html += '<button class="copy-btn" data-copy="cross">📋 复制此段分析</button>';
+  html += '</div>';
+
+  // === 推课建议 - 委婉版 ===
+  html += '<div class="course-card subtle"><h3>💬 推课话术（委婉引导版）</h3>';
+  html += '<div class="course-text">' + subtleText + '</div>';
+  html += '<button class="copy-btn" data-copy="subtle">📋 复制话术</button>';
+  html += '</div>';
+
+  // === 推课建议 - 直白版 ===
+  html += '<div class="course-card direct"><h3>🎯 推课话术（直接建议版）</h3>';
+  html += '<div class="course-text">' + directText + '</div>';
+  html += '<button class="copy-btn" data-copy="direct">📋 复制话术</button>';
+  html += '</div>';
+
+  // === 一键复制全部 ===
+  html += '<div style="text-align:center;margin:20px 0"><button class="copy-btn" data-copy="all" style="padding:12px 28px;font-size:14px">📋 一键复制全部分析</button></div>';
+
+  $('adminBody').innerHTML = html;
+
+  setTimeout(function() { drawRadar('adminRadarCanvas', radarLabels, radarValues); }, 200);
+
+  // 绑定复制按钮
+  var copyBtns = document.querySelectorAll('.copy-btn');
+  for (var i = 0; i < copyBtns.length; i++) {
+    copyBtns[i].addEventListener('click', function() {
+      var type = this.dataset.copy;
+      var text = '';
+      if (type === 'strength') {
+        for (var j = 0; j < strengthItems.length; j++) text += strengthItems[j].text + '\n';
+      } else if (type === 'weakness') {
+        for (var j = 0; j < weaknessItems.length; j++) text += weaknessItems[j].text + '\n';
+      } else if (type === 'cross') {
+        for (var j = 0; j < crossItems.length; j++) text += crossItems[j].text + '\n';
+      } else if (type === 'subtle') {
+        text = subtleText;
+      } else if (type === 'direct') {
+        text = directText;
+      } else if (type === 'all') {
+        text = '【' + data.name + ' 深度分析报告】\n\n';
+        text += '▸ 基础数据：答对' + data.correctCount + '/10，总用时' + data.totalTime + 's，平均掌握' + avgMastery + '%\n\n';
+        text += '▸ 认知优势：\n';
+        for (var j = 0; j < strengthItems.length; j++) text += '  · ' + strengthItems[j].text + '\n';
+        text += '\n▸ 薄弱环节与后续影响：\n';
+        for (var j = 0; j < weaknessItems.length; j++) text += '  · ' + weaknessItems[j].text + '\n';
+        text += '\n▸ 多维度分析：\n';
+        for (var j = 0; j < crossItems.length; j++) text += '  · ' + crossItems[j].text + '\n';
+        text += '\n▸ 推课话术（委婉版）：\n' + subtleText;
+        text += '\n\n▸ 推课话术（直白版）：\n' + directText;
+      }
+
+      var btn = this;
+      function doCopy(t) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(t).then(function() {
+            btn.textContent = '已复制 ✓';
+            btn.classList.add('copied');
+            setTimeout(function() { btn.textContent = '📋 ' + (type === 'all' ? '一键复制全部分析' : type === 'subtle' || type === 'direct' ? '复制话术' : '复制此段分析'); btn.classList.remove('copied'); }, 2000);
+          });
+        } else {
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          btn.textContent = '已复制 ✓';
+          btn.classList.add('copied');
+          setTimeout(function() { btn.textContent = '📋 ' + (type === 'all' ? '一键复制全部分析' : type === 'subtle' || type === 'direct' ? '复制话术' : '复制此段分析'); btn.classList.remove('copied'); }, 2000);
+        }
+      }
+      doCopy(text);
+    });
+  }
+
+  $('backToList').addEventListener('click', function() {
+    currentView = 'list';
+    $('tabList').style.display = '';
+    $('tabDetail').style.display = 'none';
+    $('tabList').classList.add('active');
+    $('tabDetail').classList.remove('active');
+    loadAndRender();
+  });
+
+  $('downloadReport').addEventListener('click', function() { downloadReport(data); });
+}
+
+// ===== 雷达图 =====
+function drawRadar(canvasId, labels, values) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 90;
+  var n = labels.length;
+  var step = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, W, H);
+
+  for (var lv = 1; lv <= 4; lv++) {
+    var r = R * lv / 4;
+    ctx.beginPath();
+    for (var i = 0; i <= n; i++) {
+      var angle = i * step - Math.PI / 2;
+      var x = cx + r * Math.cos(angle);
+      var y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,122,69,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,122,69,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  for (var i = 0; i <= n; i++) {
+    var idx = i % n;
+    var angle = idx * step - Math.PI / 2;
+    var r = R * (values[idx] / 100);
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,122,69,0.18)';
+  ctx.fill();
+  ctx.strokeStyle = '#FF7A45';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    var r = R * (values[i] / 100);
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FF7A45';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i < n; i++) {
+    var angle = i * step - Math.PI / 2;
+    var lx = cx + (R + 34) * Math.cos(angle);
+    var ly = cy + (R + 34) * Math.sin(angle);
+    var cosA = Math.cos(angle);
+    if (Math.abs(cosA) < 0.15) {
+      ctx.textAlign = 'center';
+    } else if (cosA > 0) {
+      ctx.textAlign = 'left';
+    } else {
+      ctx.textAlign = 'right';
+    }
+    ctx.fillStyle = '#3D2817';
+    ctx.fillText(labels[i], lx, ly - 7);
+    ctx.fillStyle = '#FF7A45';
+    ctx.font = 'bold 11px "PingFang SC",sans-serif';
+    ctx.fillText(values[i] + '%', lx, ly + 9);
+    ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+  }
+}
+
+// ===== 下载报告 =====
+function downloadReport(data) {
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + data.name + ' 深度分析报告</title>';
+  html += '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#FFF8E7;color:#3D2817;padding:40px 20px}.wrap{max-width:700px;margin:0 auto}h1{font-size:24px;text-align:center;margin-bottom:4px}.sub{text-align:center;color:#8B8680;font-size:14px;margin-bottom:24px}.section{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}.section h2{font-size:17px;margin-bottom:14px;color:#FF7A45}.item{padding:8px 0;font-size:14px;line-height:1.7;border-bottom:1px solid #FCEFD5}.item:last-child{border:none}.print-btn{display:block;margin:20px auto;padding:12px 32px;background:#FF7A45;color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer}@media print{.print-btn{display:none}body{background:white;padding:20px}}</style></head><body><div class="wrap">';
+  html += '<h1>' + data.name + ' 的深度分析报告</h1>';
+  html += '<div class="sub">' + (data.grade || '一升二') + ' · ' + data.subject + ' · ' + new Date(data.timestamp).toLocaleDateString('zh-CN') + '</div>';
+
+  // 基础数据
+  html += '<div class="section"><h2>📊 基础数据</h2>';
+  html += '<div class="item">答对：' + data.correctCount + '/10 | 总用时：' + data.totalTime + 's</div>';
+  for (var i = 0; i < QUIZ_CONFIG.lessons.length; i++) {
+    var l = QUIZ_CONFIG.lessons[i];
+    var ls = data.lessonStats[l.id];
+    html += '<div class="item">' + l.tag + '·' + l.name + '：答对' + ls.correct + '/2</div>';
+  }
+  html += '</div>';
+
+  // 逐题
+  html += '<div class="section"><h2>📋 逐题详情</h2>';
+  for (var i = 0; i < data.answers.length; i++) {
+    var a = data.answers[i];
+    if (!a) continue;
+    var q = QUIZ_CONFIG.questions[i];
+    var st = a.isSkip ? '跳过' : a.isCorrect ? '正确' : (a.isTimeout ? '超时' : '错误');
+    html += '<div class="item">第' + (i+1) + '题 · ' + q.label + ' · ' + st + ' · 用时' + a.timeUsed + 's<br>📌 ' + q.explain + '</div>';
+  }
+  html += '</div>';
+
+  html += '<button class="print-btn" onclick="window.print()">🖨️ 打印报告</button>';
+  html += '</div></body></html>';
+
+  var blob = new Blob([html], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  var link = document.createElement('a');
+  link.href = url;
+  var dateStr = new Date(data.timestamp).toLocaleDateString('zh-CN').replace(/\//g, '');
+  link.download = data.name + '_深度分析报告_' + dateStr + '.html';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== 示例数据 =====
+function generateDemoData() {
+  var now = Date.now();
+  var lessons = QUIZ_CONFIG.lessons;
+  var questions = QUIZ_CONFIG.questions;
+  var students = [];
+
+  // 辅助：构造一条答题记录
+  function makeAnswer(qi, isCorrect, timeUsed, isSkip, isTimeout) {
+    var q = questions[qi];
+    var sel = null;
+    if (isSkip) { sel = null; }
+    else if (q.questionType === 'choice') {
+      sel = isCorrect ? q.answer : ((q.answer + 1) % q.options.length);
+    } else {
+      sel = isCorrect ? q.answer : '99';
+    }
+    return { qIndex: qi, selected: sel, timeUsed: timeUsed, isCorrect: !!isCorrect, isTimeout: !!isTimeout, isSkip: !!isSkip, lessonId: q.lessonId };
+  }
+
+  // 辅助：构造一个学生记录
+  function makeStudent(name, answerPattern, baseTime) {
+    var answers = [];
+    var totalTime = 0;
+    var correctCount = 0;
+    var lessonStats = {};
+    for (var i = 0; i < lessons.length; i++) {
+      lessonStats[lessons[i].id] = { name: lessons[i].name, tag: lessons[i].tag, desc: lessons[i].desc, correct: 0, totalTime: 0, questions: [] };
+    }
+    for (var i = 0; i < 10; i++) {
+      var p = answerPattern[i];
+      var timeUsed = baseTime + Math.floor(Math.random() * 8) - 3;
+      if (timeUsed < 3) timeUsed = 3;
+      if (p.skip) { timeUsed = Math.floor(Math.random() * 5) + 2; }
+      var a = makeAnswer(i, !!p.correct, timeUsed, !!p.skip, !!p.timeout);
+      answers.push(a);
+      totalTime += timeUsed;
+      if (p.correct) correctCount++;
+      var ls = lessonStats[a.lessonId];
+      if (p.correct) ls.correct++;
+      ls.totalTime += timeUsed;
+      ls.questions.push(JSON.parse(JSON.stringify(a)));
+    }
+    return { name: name, grade: '一升二', subject: '数学思维', timestamp: now - Math.floor(Math.random() * 86400000 * 3), totalTime: totalTime, correctCount: correctCount, lessonStats: lessonStats, answers: answers };
+  }
+
+  // 学生1：学霸型 - 9/10
+  students.push(makeStudent('王子轩', [
+    {correct:1},{correct:1},{correct:1},{correct:1},{correct:1},{correct:1},{correct:1},{correct:1},{correct:0},{correct:1}
+  ], 12));
+
+  // 学生2：中上型 - 7/10
+  students.push(makeStudent('李思琪', [
+    {correct:1},{correct:1},{correct:1},{correct:0},{correct:1},{correct:1},{correct:0},{correct:1},{correct:0},{correct:0}
+  ], 16));
+
+  // 学生3：中等型 - 5/10
+  students.push(makeStudent('张浩然', [
+    {correct:1},{correct:0},{correct:1},{correct:0},{correct:1},{correct:0},{correct:1},{correct:1},{correct:0},{correct:0}
+  ], 20));
+
+  // 学生4：中下型 - 3/10
+  students.push(makeStudent('赵雨萱', [
+    {correct:1},{correct:0},{correct:0},{correct:0},{correct:1},{correct:0},{correct:0},{correct:0},{correct:1},{correct:0}
+  ], 25));
+
+  // 学生5：学困型 - 2/10, 有跳过
+  students.push(makeStudent('刘一诺', [
+    {correct:1},{correct:0},{correct:0},{skip:1},{correct:0},{skip:1},{correct:0},{correct:0},{skip:1},{correct:1}
+  ], 22));
+
+  return students;
+}
+
+function loadDemoData() {
+  var demo = generateDemoData();
+  // 保存到 localStorage
+  localStorage.setItem('quiz_results_v2', JSON.stringify(demo));
+  loadAndRender();
+  showToast('已加载 5 条示例数据', 'success');
+}
+
+function showToast(msg, type) {
+  var el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.12);transition:all .4s;opacity:1;' + (type === 'success' ? 'background:#E8F5EC;color:#4A9B6E' : 'background:#FFF4D6;color:#B88600');
+  document.body.appendChild(el);
+  setTimeout(function() { el.style.opacity = '0'; setTimeout(function() { document.body.removeChild(el); }, 500); }, 2500);
+}
+
+// ===== 初始化 =====
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    RemoteStore.init();
+    renderRemoteBar();
+    loadAndRender();
+
+    if ($('adminSearchInput')) $('adminSearchInput').addEventListener('input', function(e) {
+      var allData = RemoteStore.ready() ? (cachedRemoteResults || []) : getLocalResults();
+      if (RemoteStore.ready() && cachedRemoteResults) {
+        allData = mergeResults(cachedRemoteResults, getLocalResults());
+      }
+      renderList(allData, e.target.value.trim());
+    });
+
+    if ($('tabList')) $('tabList').addEventListener('click', function() {
+      currentView = 'list';
+      $('tabList').classList.add('active');
+      $('tabDetail').classList.remove('active');
+      $('tabDetail').style.display = 'none';
+      $('tabList').style.display = '';
+      loadAndRender();
+    });
+
+    if ($('btnRefresh')) $('btnRefresh').addEventListener('click', function() {
+      loadAndRender();
+    });
+
+    if ($('btnSetup')) $('btnSetup').addEventListener('click', function() {
+      toggleSetup();
+    });
+
+    if ($('btnDemo')) $('btnDemo').addEventListener('click', function() {
+      try {
+        var demo = generateDemoData();
+        localStorage.setItem('quiz_results_v2', JSON.stringify(demo));
+        loadAndRender();
+        showToast('已加载 5 条示例数据', 'success');
+      } catch(e) {
+        alert('加载示例数据失败: ' + e.message);
+      }
+    });
+  } catch(e) {
+    console.error('初始化失败:', e.message);
+  }
+});
+</script>
+</body>
+</html>
