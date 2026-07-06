@@ -246,7 +246,11 @@ var RemoteStore = {
         return r.json();
       })
       .then(function(data) { return Array.isArray(data.record) ? data.record : []; })
-      .catch(function() { return []; });
+      .catch(function(err) {
+        console.error('[云端读取失败]', err.message);
+        window._lastRemoteError = err.message;
+        return [];
+      });
   },
   makeStudentLink: function() {
     if (!this.ready()) return '';
@@ -432,6 +436,11 @@ function loadAndRender() {
       cachedRemoteResults = remoteData;
       var localData = getLocalResults();
       var allData = mergeResults(remoteData, localData);
+      // 如果云端返回空且本地也空，且之前有错误，显示错误提示
+      if (allData.length === 0 && window._lastRemoteError) {
+        $('adminBody').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>云端读取失败: ' + window._lastRemoteError + '</p><p style="font-size:14px;margin-top:8px;color:var(--orange)">请检查 API Key 和 Bin ID 是否正确，或到 jsonbin.io 确认账户状态</p></div>';
+        return;
+      }
       renderList(allData, keyword);
     });
   } else {

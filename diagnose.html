@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摸底测系统诊断工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#FFF8E7;color:#3D2817;padding:20px;line-height:1.6}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:24px;margin-bottom:8px;color:#FF7A45}
+.subtitle{color:#8B8680;margin-bottom:24px;font-size:14px}
+.card{background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card h2{font-size:17px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.check-item{padding:12px 0;border-bottom:1px solid #FCEFD5;display:flex;align-items:flex-start;gap:12px}
+.check-item:last-child{border-bottom:none}
+.check-icon{font-size:20px;flex-shrink:0}
+.check-label{font-weight:700;font-size:14px;margin-bottom:4px}
+.check-detail{font-size:13px;color:#8B8680;word-break:break-all}
+.check-status{font-size:12px;font-weight:700;padding:3px 10px;border-radius:100px;flex-shrink:0;margin-top:2px}
+.status-ok{background:#E8F5EC;color:#4A9B6E}
+.status-fail{background:#FCE8EA;color:#E84855}
+.status-warn{background:#FFF4D6;color:#B88600}
+.status-pending{background:#FCEFD5;color:#8B8680}
+.btn{padding:12px 24px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:all .2s;margin:4px}
+.btn-primary{background:linear-gradient(135deg,#FF7A45,#FF9F66);color:white;box-shadow:0 4px 12px rgba(255,122,69,.2)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-secondary{background:#FCEFD5;color:#3D2817}
+.btn-secondary:hover{background:#FCEFD5CC}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.input-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.input-row input{flex:1;min-width:200px;padding:10px 14px;border:2px solid #FCEFD5;border-radius:10px;font-size:14px;outline:none;background:#FFF8E7}
+.input-row input:focus{border-color:#FF7A45;background:white}
+.link-box{background:#FFF8E7;border-radius:10px;padding:12px;font-size:12px;word-break:break-all;margin-top:8px;border:1px solid #FCEFD5}
+.result-text{font-size:13px;color:#3D2817;margin-top:8px;white-space:pre-wrap;font-family:monospace;background:#FFF8E7;padding:12px;border-radius:8px;max-height:300px;overflow:auto}
+.hidden{display:none}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #FCEFD5;border-top-color:#FF7A45;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{background:#FFF4D6;border-radius:10px;padding:14px;font-size:13px;color:#5D3A1A;line-height:1.7;margin-top:12px}
+.note b{color:#B88600}
+.danger{background:#FCE8EA;border-radius:10px;padding:14px;font-size:13px;color:#E84855;line-height:1.7;margin-top:12px}
+.danger b{color:#c0392b}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔧 摸底测系统诊断工具</h1>
+  <div class="subtitle">检查云端配置、数据连通性、学生链接等关键环节</div>
+
+  <!-- 检查1: 管理端云端配置 -->
+  <div class="card">
+    <h2>📋 1. 管理端云端配置</h2>
+    <div class="check-item">
+      <span class="check-icon" id="icon-cfg">⏳</span>
+      <div style="flex:1">
+        <div class="check-label">localStorage 中的云端配置 (quiz_rc_admin)</div>
+        <div class="check-detail" id="detail-cfg">正在检查...</div>
+      </div>
+      <span class="check-status status-pending" id="status-cfg">检查中</span>
+    </div>
+  </div>
+
+  <!-- 检查2: 学生端配置 -->
+  <div class="card">
+    <h2>📋 2. 学生端云端配置</h2>
+    <div class="check-item">
+      <span class="check-icon" id="icon-stu">⏳</span>
+      <div style="flex:1">
+        <div class="check-label">localStorage 中的学生端配置 (quiz_rc)</div>
+        <div class="check-detail" id="detail-stu">正在检查...</div>
+      </div>
+      <span class="check-status status-pending" id="status-stu">检查中</span>
+    </div>
+  </div>
+
+  <!-- 检查3: JSONBin 读取测试 -->
+  <div class="card">
+    <h2>📋 3. JSONBin 数据读取测试</h2>
+    <div class="check-item">
+      <span class="check-icon" id="icon-read">⏳</span>
+      <div style="flex:1">
+        <div class="check-label">从云端 Bin 读取数据</div>
+        <div class="check-detail" id="detail-read">等待配置检查完成后自动测试...</div>
+      </div>
+      <span class="check-status status-pending" id="status-read">待测</span>
+    </div>
+  </div>
+
+  <!-- 检查4: JSONBin 写入测试 -->
+  <div class="card">
+    <h2>📋 4. JSONBin 数据写入测试</h2>
+    <div class="check-item">
+      <span class="check-icon" id="icon-write">⏳</span>
+      <div style="flex:1">
+        <div class="check-label">向云端 Bin 写入测试数据</div>
+        <div class="check-detail" id="detail-write">点击下方按钮测试写入（不会影响真实数据）</div>
+      </div>
+      <span class="check-status status-pending" id="status-write">待测</span>
+    </div>
+    <button class="btn btn-secondary" id="btnWriteTest" style="margin-top:8px" disabled>测试写入</button>
+  </div>
+
+  <!-- 检查5: 学生链接生成 -->
+  <div class="card">
+    <h2>📋 5. 学生测评链接</h2>
+    <div class="check-item">
+      <span class="check-icon" id="icon-link">⏳</span>
+      <div style="flex:1">
+        <div class="check-label">当前配置生成的学生链接</div>
+        <div class="check-detail" id="detail-link">等待配置检查...</div>
+      </div>
+      <span class="check-status status-pending" id="status-link">待生成</span>
+    </div>
+  </div>
+
+  <!-- 手动输入配置 -->
+  <div class="card">
+    <h2>⚙️ 手动输入配置测试</h2>
+    <p style="font-size:13px;color:#8B8680;margin-bottom:12px">如果本机没有配置，可以手动输入 API Key 和 Bin ID 进行测试：</p>
+    <div class="input-row">
+      <input id="manualKey" placeholder="JSONBin X-Master-Key">
+      <input id="manualBin" placeholder="JSONBin Bin ID">
+      <button class="btn btn-primary" id="btnManualTest">测试</button>
+    </div>
+    <div class="result-text hidden" id="manualResult"></div>
+  </div>
+
+  <!-- 诊断结论 -->
+  <div class="card" id="conclusionCard" style="display:none">
+    <h2>🎯 诊断结论</h2>
+    <div id="conclusionContent"></div>
+  </div>
+
+  <!-- 已知问题说明 -->
+  <div class="card">
+    <h2>⚠️ 代码中已知的潜在问题</h2>
+    <div class="danger">
+      <b>问题1：并发写入竞态条件（最可能导致数据丢失）</b><br>
+      学生端保存数据时采用"先读后写"模式（GET→修改→PUT）。当多个学生同时提交测评时，后提交的会覆盖先提交的数据，导致数据丢失。学生越多，丢失概率越高。
+    </div>
+    <div class="danger" style="margin-top:8px">
+      <b>问题2：错误被静默吞掉</b><br>
+      save() 和 loadAll() 的 catch 把所有错误都吞掉了，返回 false 或空数组。API Key 过期、Bin 容量超限、网络超时等问题完全不可见。
+    </div>
+    <div class="danger" style="margin-top:8px">
+      <b>问题3：学生可能没带 ?rc= 参数</b><br>
+      如果学生直接访问 https://neowu1129.github.io/tutu-quiz/（没有 ?rc= 参数），数据只会保存在学生自己浏览器的 localStorage 里，不会同步到云端。
+    </div>
+    <div class="danger" style="margin-top:8px">
+      <b>问题4：异步保存可能被中断</b><br>
+      答题完成后页面立即跳转结果页，同步是异步的。如果学生快速关闭页面，fetch 请求可能被中断。
+    </div>
+  </div>
+</div>
+
+<script>
+var results = {
+  cfg: null, stu: null, readOk: false, writeOk: false, linkOk: false
+};
+
+function setStatus(id, status, text) {
+  var el = document.getElementById('status-' + id);
+  var icon = document.getElementById('icon-' + id);
+  el.className = 'check-status status-' + status;
+  el.textContent = text;
+  if (status === 'ok') icon.textContent = '✅';
+  else if (status === 'fail') icon.textContent = '❌';
+  else if (status === 'warn') icon.textContent = '⚠️';
+  else icon.textContent = '⏳';
+}
+
+function setDetail(id, text) {
+  document.getElementById('detail-' + id).textContent = text;
+}
+
+// ===== 检查1: 管理端配置 =====
+function checkAdminConfig() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+    if (saved && saved.key && saved.bin) {
+      results.cfg = saved;
+      setStatus('cfg', 'ok', '已配置');
+      setDetail('cfg', 'Bin ID: ' + saved.bin.substring(0, 16) + '... | API Key: ' + saved.key.substring(0, 8) + '...');
+      return saved;
+    } else {
+      setStatus('cfg', 'fail', '未配置');
+      setDetail('cfg', '管理端没有配置云端存储！这是数据收不到的最常见原因。请在管理后台点击 ⚙️ 按钮配置 JSONBin API Key 和 Bin ID。');
+      return null;
+    }
+  } catch(e) {
+    setStatus('cfg', 'fail', '配置损坏');
+    setDetail('cfg', '配置解析失败: ' + e.message);
+    return null;
+  }
+}
+
+// ===== 检查2: 学生端配置 =====
+function checkStudentConfig() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('quiz_rc'));
+    if (saved && saved.key && saved.bin) {
+      results.stu = saved;
+      setStatus('stu', 'ok', '已配置');
+      setDetail('stu', 'Bin ID: ' + saved.bin.substring(0, 16) + '...');
+      // 检查是否与管理端一致
+      if (results.cfg && (results.cfg.bin !== saved.bin || results.cfg.key !== saved.key)) {
+        setStatus('stu', 'warn', '不一致');
+        setDetail('stu', '学生端与管理端的 Bin ID 或 API Key 不一致！这会导致学生写入的数据与管理端读取的数据不在同一个 Bin。');
+      }
+      return saved;
+    } else {
+      setStatus('stu', 'warn', '未配置');
+      setDetail('stu', '本浏览器没有学生端配置（正常情况，学生用自己的设备）。关键是要确保学生使用带 ?rc= 参数的链接访问。');
+      return null;
+    }
+  } catch(e) {
+    setStatus('stu', 'fail', '配置损坏');
+    return null;
+  }
+}
+
+// ===== 检查3: JSONBin 读取 =====
+function testRead(cfg) {
+  if (!cfg) {
+    setStatus('read', 'fail', '跳过');
+    setDetail('read', '没有配置，无法测试');
+    return;
+  }
+  setStatus('read', 'pending', '测试中');
+  setDetail('read', '正在读取 Bin: ' + cfg.bin + ' ...');
+  var url = 'https://api.jsonbin.io/v3/b/' + cfg.bin + '/latest';
+  fetch(url, { headers: { 'X-Master-Key': cfg.key } })
+    .then(function(r) {
+      if (!r.ok) {
+        setStatus('read', 'fail', 'HTTP ' + r.status);
+        setDetail('read', '读取失败！HTTP 状态码: ' + r.status + (r.status === 401 ? '（API Key 无效或过期）' : r.status === 404 ? '（Bin ID 不存在）' : ''));
+        return null;
+      }
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      var records = Array.isArray(data.record) ? data.record : [];
+      results.readOk = true;
+      setStatus('read', 'ok', records.length + ' 条');
+      var latestTs = 0, latestName = '';
+      for (var i = 0; i < records.length; i++) {
+        if (records[i].timestamp && records[i].timestamp > latestTs) {
+          latestTs = records[i].timestamp;
+          latestName = records[i].name || '';
+        }
+      }
+      var detail = '云端共有 ' + records.length + ' 条测评记录';
+      if (latestTs > 0) {
+        detail += '\n最新记录: ' + latestName + ' - ' + new Date(latestTs).toLocaleString('zh-CN');
+      }
+      var daysAgo = latestTs > 0 ? Math.floor((Date.now() - latestTs) / 86400000) : -1;
+      if (daysAgo >= 0) {
+        if (daysAgo === 0) detail += '\n（今天提交）';
+        else if (daysAgo <= 7) detail += '\n（' + daysAgo + '天前提交）';
+        else detail += '\n⚠️ 已有 ' + daysAgo + ' 天没有新数据了！';
+      }
+      setDetail('read', detail);
+      document.getElementById('btnWriteTest').disabled = false;
+    })
+    .catch(function(err) {
+      setStatus('read', 'fail', '网络错误');
+      setDetail('read', '请求失败: ' + err.message);
+    });
+}
+
+// ===== 检查4: JSONBin 写入 =====
+function testWrite() {
+  var cfg = results.cfg;
+  if (!cfg) return;
+  setStatus('write', 'pending', '测试中');
+  setDetail('write', '正在测试写入（添加一条测试记录）...');
+
+  // 先读取当前数据
+  var url = 'https://api.jsonbin.io/v3/b/' + cfg.bin + '/latest';
+  fetch(url, { headers: { 'X-Master-Key': cfg.key } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var records = Array.isArray(data.record) ? data.record : [];
+      var testRecord = {
+        name: '__诊断测试__',
+        grade: '测试',
+        subject: '测试',
+        timestamp: Date.now(),
+        totalTime: 0,
+        correctCount: 0,
+        lessonStats: {},
+        answers: [],
+        _diagnostic: true
+      };
+      records.push(testRecord);
+      return fetch('https://api.jsonbin.io/v3/b/' + cfg.bin, {
+        method: 'PUT',
+        headers: { 'X-Master-Key': cfg.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify(records)
+      });
+    })
+    .then(function(r) {
+      if (r.ok) {
+        results.writeOk = true;
+        setStatus('write', 'ok', '成功');
+        setDetail('write', '写入测试成功！API Key 有写入权限。可以在管理后台看到一条 "__诊断测试__" 的记录，可以删除。');
+      } else {
+        setStatus('write', 'fail', 'HTTP ' + r.status);
+        setDetail('write', '写入失败！HTTP 状态码: ' + r.status + (r.status === 401 ? '（API Key 无写入权限或已过期）' : r.status === 413 ? '（Bin 容量超限，免费版上限 100KB）' : ''));
+      }
+    })
+    .catch(function(err) {
+      setStatus('write', 'fail', '网络错误');
+      setDetail('write', '写入请求失败: ' + err.message);
+    });
+}
+
+// ===== 检查5: 学生链接 =====
+function checkLink() {
+  var cfg = results.cfg;
+  if (!cfg) {
+    setStatus('link', 'fail', '无法生成');
+    setDetail('link', '没有配置，无法生成学生链接');
+    return;
+  }
+  var base = window.location.href.replace(/diagnose\.html.*$/, 'index.html');
+  if (base.indexOf('index.html') < 0) {
+    base = 'https://neowu1129.github.io/tutu-quiz/index.html';
+  }
+  var encoded = btoa(JSON.stringify({ k: cfg.key, b: cfg.bin }));
+  var link = base + '?rc=' + encodeURIComponent(encoded);
+  results.linkOk = true;
+  setStatus('link', 'ok', '已生成');
+  setDetail('link', link);
+}
+
+// ===== 手动测试 =====
+function manualTest() {
+  var key = document.getElementById('manualKey').value.trim();
+  var bin = document.getElementById('manualBin').value.trim();
+  var resultEl = document.getElementById('manualResult');
+  if (!key || !bin) {
+    resultEl.textContent = '请填写 API Key 和 Bin ID';
+    resultEl.classList.remove('hidden');
+    return;
+  }
+  resultEl.textContent = '正在测试...\nBin: ' + bin + '\nKey: ' + key.substring(0, 8) + '...';
+  resultEl.classList.remove('hidden');
+
+  fetch('https://api.jsonbin.io/v3/b/' + bin + '/latest', { headers: { 'X-Master-Key': key } })
+    .then(function(r) {
+      if (!r.ok) {
+        resultEl.textContent = '❌ 读取失败！HTTP ' + r.status + '\n' + (r.status === 401 ? 'API Key 无效或过期' : r.status === 404 ? 'Bin ID 不存在' : '未知错误');
+        return null;
+      }
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      var records = Array.isArray(data.record) ? data.record : [];
+      var info = '✅ 读取成功！\n';
+      info += 'Bin 中共有 ' + records.length + ' 条记录\n';
+      if (records.length > 0) {
+        var latest = records[records.length - 1];
+        if (latest.timestamp) {
+          info += '最新记录时间: ' + new Date(latest.timestamp).toLocaleString('zh-CN') + '\n';
+          info += '最新记录姓名: ' + (latest.name || '未知') + '\n';
+        }
+        // 检查最近7天的数据
+        var weekAgo = Date.now() - 7 * 86400000;
+        var recent = records.filter(function(r) { return r.timestamp && r.timestamp > weekAgo; });
+        info += '\n最近7天新增: ' + recent.length + ' 条';
+        if (recent.length === 0 && records.length > 0) {
+          info += '\n\n⚠️ 最近7天没有新数据！检查学生是否使用了正确的链接。';
+        }
+      } else {
+        info += '\n⚠️ Bin 是空的！学生可能没有使用带 ?rc= 参数的链接，或者写入失败了。';
+      }
+
+      // 生成学生链接
+      var base = 'https://neowu1129.github.io/tutu-quiz/index.html';
+      var encoded = btoa(JSON.stringify({ k: key, b: bin }));
+      var link = base + '?rc=' + encodeURIComponent(encoded);
+      info += '\n\n📋 正确的学生链接:\n' + link;
+      resultEl.textContent = info;
+    })
+    .catch(function(err) {
+      resultEl.textContent = '❌ 网络错误: ' + err.message;
+    });
+}
+
+// ===== 生成诊断结论 =====
+function showConclusion() {
+  var card = document.getElementById('conclusionCard');
+  var content = document.getElementById('conclusionContent');
+  var issues = [];
+
+  if (!results.cfg) {
+    issues.push({ level: 'danger', text: '管理端没有配置云端存储！这是数据收不到的直接原因。请打开管理后台 admin.html，点击 ⚙️ 按钮配置 JSONBin API Key 和 Bin ID。' });
+  } else {
+    if (!results.readOk) {
+      issues.push({ level: 'danger', text: '无法从 JSONBin 读取数据！API Key 可能已过期，或 Bin ID 不正确。请到 jsonbin.io 检查。' });
+    }
+    if (!results.writeOk) {
+      issues.push({ level: 'warn', text: '写入测试未通过或未执行。即使读取正常，学生端写入也可能失败（权限问题或容量超限）。' });
+    }
+    if (results.stu && results.cfg && (results.cfg.bin !== results.stu.bin || results.cfg.key !== results.stu.key)) {
+      issues.push({ level: 'danger', text: '学生端与管理端的 Bin ID/API Key 不一致！学生在写入一个 Bin，管理端在读取另一个 Bin。' });
+    }
+  }
+
+  // 始终提示竞态条件
+  issues.push({ level: 'warn', text: '代码存在并发写入竞态条件：多个学生同时提交时，后提交的会覆盖先提交的数据。这是"有些数据收不到"的技术根因。' });
+
+  if (issues.length === 0) {
+    content.innerHTML = '<div class="note" style="background:#E8F5EC;color:#4A9B6E"><b>✅ 所有检查通过！</b><br>如果仍然收不到数据，最可能的原因是学生没有使用带 ?rc= 参数的链接访问测评页面。</div>';
+  } else {
+    var html = '';
+    for (var i = 0; i < issues.length; i++) {
+      var cls = issues[i].level === 'danger' ? 'danger' : 'note';
+      html += '<div class="' + cls + '"' + (i > 0 ? ' style="margin-top:8px"' : '') + '>' + issues[i].text + '</div>';
+    }
+    content.innerHTML = html;
+  }
+  card.style.display = 'block';
+}
+
+// ===== 初始化 =====
+window.addEventListener('DOMContentLoaded', function() {
+  var cfg = checkAdminConfig();
+  checkStudentConfig();
+  if (cfg) {
+    testRead(cfg);
+    checkLink();
+  }
+  document.getElementById('btnWriteTest').addEventListener('click', function() {
+    testWrite();
+    setTimeout(showConclusion, 3000);
+  });
+  document.getElementById('btnManualTest').addEventListener('click', manualTest);
+  // 5秒后自动显示结论
+  setTimeout(showConclusion, 5000);
+});
+</script>
+</body>
+</html>

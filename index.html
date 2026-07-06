@@ -206,26 +206,54 @@ var RemoteStore = {
   },
   ready: function() { return !!this._cfg; },
   _updateBadge: function() {
-    // 学生端不显示同步状态（管理端有独立状态栏）
-    return;
+    var badge = document.getElementById('syncBadge');
+    var dot = document.getElementById('syncDot');
+    var label = document.getElementById('syncLabel');
+    if (!badge) return;
+    if (this.ready()) {
+      badge.style.display = 'flex';
+      dot.className = 'dot online';
+      label.textContent = '云端已连接';
+    } else {
+      badge.style.display = 'flex';
+      dot.className = 'dot offline';
+      label.textContent = '未连接云端';
+    }
   },
   save: function(result) {
     if (!this.ready()) return Promise.resolve(false);
     var self = this;
-    var url = 'https://api.jsonbin.io/v3/b/' + this._cfg.bin + '/latest';
-    return fetch(url, { headers: { 'X-Master-Key': this._cfg.key } })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        var records = Array.isArray(data.record) ? data.record : [];
-        records.push(result);
-        return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
-          method: 'PUT',
-          headers: { 'X-Master-Key': self._cfg.key, 'Content-Type': 'application/json' },
-          body: JSON.stringify(records)
+    var maxRetries = 3;
+    function attempt(retryCount) {
+      var url = 'https://api.jsonbin.io/v3/b/' + self._cfg.bin + '/latest';
+      var etag = null;
+      return fetch(url, { headers: { 'X-Master-Key': self._cfg.key } })
+        .then(function(r) {
+          etag = r.headers.get('ETag');
+          return r.json();
+        })
+        .then(function(data) {
+          var records = Array.isArray(data.record) ? data.record : [];
+          records.push(result);
+          var putHeaders = { 'X-Master-Key': self._cfg.key, 'Content-Type': 'application/json' };
+          if (etag) putHeaders['If-Match'] = etag;
+          return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
+            method: 'PUT',
+            headers: putHeaders,
+            body: JSON.stringify(records)
+          });
+        })
+        .then(function(r) {
+          if (r.ok) return true;
+          if (r.status === 412 && retryCount < maxRetries) {
+            return new Promise(function(resolve) {
+              setTimeout(function() { resolve(attempt(retryCount + 1)); }, 500 * (retryCount + 1));
+            });
+          }
+          return false;
         });
-      })
-      .then(function(r) { return r.ok; })
-      .catch(function() { return false; });
+    }
+    return attempt(0).catch(function() { return false; });
   }
 };
 
@@ -372,6 +400,17 @@ var DICE_SVG = '<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http:
 // ===== 入口 =====
 window.addEventListener('DOMContentLoaded', function() {
   RemoteStore.init();
+
+  // 如果未连接云端，在入口页显示警告
+  if (!RemoteStore.ready()) {
+    var entryCard = document.querySelector('.entry-card');
+    if (entryCard) {
+      var warn = document.createElement('div');
+      warn.style.cssText = 'margin-top:14px;padding:12px;background:#FCE8EA;border-radius:12px;font-size:13px;color:#E84855;line-height:1.6;text-align:left';
+      warn.innerHTML = '<b>⚠ 未连接云端</b><br>当前链接缺少云端参数，答题数据将无法同步给老师。请使用老师发给您的专属链接打开。';
+      entryCard.appendChild(warn);
+    }
+  }
 
   // 如果已测评过，直接跳到结果页
   try {
@@ -677,11 +716,28 @@ function finishQuiz() {
   localStorage.setItem('quiz_completed_v2', JSON.stringify(resultData));
 
   if (RemoteStore.ready()) {
-    showToast('正在同步到云端...', 'info');
+    showToast('正在同步到云端，请勿关闭页面...', 'info');
+    var syncDone = false;
+    var unloadHandler = function(e) {
+      if (!syncDone) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+    window.addEventListener('beforeunload', unloadHandler);
     RemoteStore.save(resultData).then(function(ok) {
+      syncDone = true;
+      window.removeEventListener('beforeunload', unloadHandler);
       if (ok) showToast('✓ 已成功同步到云端', 'success');
-      else showToast('同步失败，数据已保存到本地', 'error');
+      else showToast('同步失败，数据已保存到本地，请联系老师', 'error');
     });
+    setTimeout(function() {
+      syncDone = true;
+      window.removeEventListener('beforeunload', unloadHandler);
+    }, 10000);
+  } else {
+    showToast('⚠ 未连接云端，数据仅保存在本地', 'error');
   }
 
   showPage('page-result');
