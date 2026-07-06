@@ -229,20 +229,12 @@ var RemoteStore = {
     if (!this.ready()) return Promise.resolve(false);
     var self = this;
     var maxRetries = 3;
-    function getHeaders() {
-      var h = {};
-      if (self._cfg.accessKey) {
-        h['X-Access-Key'] = self._cfg.accessKey;
-      } else {
-        h['X-Master-Key'] = self._cfg.key;
-      }
-      return h;
-    }
+    var ACCESS_KEY = '$2a$10$hfggds0Oq6NKb473YsIN5.L12OCoAO7dpKEIi/lR5zfNkvr3XdcWO';
     function attempt(retryCount) {
       var url = 'https://api.jsonbin.io/v3/b/' + self._cfg.bin + '/latest';
       var etag = null;
-      var headers = getHeaders();
-      return fetch(url, { headers: headers })
+      // 读取用 Master Key（GET 一直正常）
+      return fetch(url, { headers: { 'X-Master-Key': self._cfg.key } })
         .then(function(r) {
           etag = r.headers.get('ETag');
           return r.json();
@@ -250,12 +242,14 @@ var RemoteStore = {
         .then(function(data) {
           var records = Array.isArray(data.record) ? data.record : [];
           records.push(result);
-          var putHeaders = getHeaders();
-          putHeaders['Content-Type'] = 'application/json';
-          if (etag) putHeaders['If-Match'] = etag;
+          // 写入用 Access Key（解决 Private Bin 写入 403）
           return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
             method: 'PUT',
-            headers: putHeaders,
+            headers: {
+              'X-Access-Key': ACCESS_KEY,
+              'Content-Type': 'application/json',
+              'X-Bin-Versioning': 'false'
+            },
             body: JSON.stringify(records)
           });
         })
@@ -266,10 +260,15 @@ var RemoteStore = {
               setTimeout(function() { resolve(attempt(retryCount + 1)); }, 500 * (retryCount + 1));
             });
           }
+          console.error('[写入失败] HTTP ' + r.status);
+          return false;
+        })
+        .catch(function(err) {
+          console.error('[写入异常]', err.message);
           return false;
         });
     }
-    return attempt(0).catch(function() { return false; });
+    return attempt(0);
   }
 };
 
