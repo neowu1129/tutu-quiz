@@ -118,7 +118,7 @@ h1{font-size:24px;margin-bottom:8px;color:#FF7A45}
     <h2>⚙️ 手动输入配置测试</h2>
     <p style="font-size:13px;color:#8B8680;margin-bottom:12px">如果本机没有配置，可以手动输入 API Key 和 Bin ID 进行测试：</p>
     <div class="input-row">
-      <input id="manualKey" placeholder="JSONBin X-Master-Key">
+      <input id="manualKey" placeholder="JSONBin X-Master-Key (或 Access Key)">
       <input id="manualBin" placeholder="JSONBin Bin ID">
       <button class="btn btn-primary" id="btnManualTest">测试</button>
     </div>
@@ -176,15 +176,20 @@ function setDetail(id, text) {
 // ===== 检查1: 管理端配置 =====
 function checkAdminConfig() {
   try {
-    var saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+    var saved = JSON.parse(localStorage.getItem('remoteConfig'));
+    if (!saved || !saved.key || !saved.bin) {
+      saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+    }
     if (saved && saved.key && saved.bin) {
       results.cfg = saved;
       setStatus('cfg', 'ok', '已配置');
-      setDetail('cfg', 'Bin ID: ' + saved.bin.substring(0, 16) + '... | API Key: ' + saved.key.substring(0, 8) + '...');
+      var detail = 'Bin ID: ' + saved.bin.substring(0, 16) + '... | Key: ' + saved.key.substring(0, 8) + '...';
+      if (saved.accessKey) detail += ' | Access Key: 已配置';
+      setDetail('cfg', detail);
       return saved;
     } else {
       setStatus('cfg', 'fail', '未配置');
-      setDetail('cfg', '管理端没有配置云端存储！这是数据收不到的最常见原因。请在管理后台点击 ⚙️ 按钮配置 JSONBin API Key 和 Bin ID。');
+      setDetail('cfg', '管理端没有配置云端存储！请在管理后台点击 ⚙️ 按钮配置 JSONBin API Key 和 Bin ID。');
       return null;
     }
   } catch(e) {
@@ -197,7 +202,10 @@ function checkAdminConfig() {
 // ===== 检查2: 学生端配置 =====
 function checkStudentConfig() {
   try {
-    var saved = JSON.parse(localStorage.getItem('quiz_rc'));
+    var saved = JSON.parse(localStorage.getItem('remoteConfig'));
+    if (!saved || !saved.key || !saved.bin) {
+      saved = JSON.parse(localStorage.getItem('quiz_rc'));
+    }
     if (saved && saved.key && saved.bin) {
       results.stu = saved;
       setStatus('stu', 'ok', '已配置');
@@ -229,7 +237,13 @@ function testRead(cfg) {
   setStatus('read', 'pending', '测试中');
   setDetail('read', '正在读取 Bin: ' + cfg.bin + ' ...');
   var url = 'https://api.jsonbin.io/v3/b/' + cfg.bin + '/latest';
-  fetch(url, { headers: { 'X-Master-Key': cfg.key } })
+  var headers = {};
+  if (cfg.accessKey) {
+    headers['X-Access-Key'] = cfg.accessKey;
+  } else {
+    headers['X-Master-Key'] = cfg.key;
+  }
+  fetch(url, { headers: headers })
     .then(function(r) {
       if (!r.ok) {
         setStatus('read', 'fail', 'HTTP ' + r.status);
@@ -276,9 +290,16 @@ function testWrite() {
   setStatus('write', 'pending', '测试中');
   setDetail('write', '正在测试写入（添加一条测试记录）...');
 
+  var headers = {};
+  if (cfg.accessKey) {
+    headers['X-Access-Key'] = cfg.accessKey;
+  } else {
+    headers['X-Master-Key'] = cfg.key;
+  }
+
   // 先读取当前数据
   var url = 'https://api.jsonbin.io/v3/b/' + cfg.bin + '/latest';
-  fetch(url, { headers: { 'X-Master-Key': cfg.key } })
+  fetch(url, { headers: headers })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var records = Array.isArray(data.record) ? data.record : [];
@@ -294,9 +315,11 @@ function testWrite() {
         _diagnostic: true
       };
       records.push(testRecord);
+      var putHeaders = Object.assign({}, headers);
+      putHeaders['Content-Type'] = 'application/json';
       return fetch('https://api.jsonbin.io/v3/b/' + cfg.bin, {
         method: 'PUT',
-        headers: { 'X-Master-Key': cfg.key, 'Content-Type': 'application/json' },
+        headers: putHeaders,
         body: JSON.stringify(records)
       });
     })
@@ -307,7 +330,11 @@ function testWrite() {
         setDetail('write', '写入测试成功！API Key 有写入权限。可以在管理后台看到一条 "__诊断测试__" 的记录，可以删除。');
       } else {
         setStatus('write', 'fail', 'HTTP ' + r.status);
-        setDetail('write', '写入失败！HTTP 状态码: ' + r.status + (r.status === 401 ? '（API Key 无写入权限或已过期）' : r.status === 413 ? '（Bin 容量超限，免费版上限 100KB）' : ''));
+        var msg = '写入失败！HTTP 状态码: ' + r.status;
+        if (r.status === 401) msg += '（API Key 无写入权限或已过期）';
+        else if (r.status === 403) msg += '（权限被拒绝。如果是 Private Bin，需要创建 Access Key 并勾选 Update Bins 权限，然后填入管理后台配置）';
+        else if (r.status === 413) msg += '（Bin 容量超限，免费版上限 100KB）';
+        setDetail('write', msg);
       }
     })
     .catch(function(err) {
@@ -328,7 +355,9 @@ function checkLink() {
   if (base.indexOf('index.html') < 0) {
     base = 'https://neowu1129.github.io/tutu-quiz/index.html';
   }
-  var encoded = btoa(JSON.stringify({ k: cfg.key, b: cfg.bin }));
+  var payload = { k: cfg.key, b: cfg.bin };
+  if (cfg.accessKey) payload.a = cfg.accessKey;
+  var encoded = btoa(JSON.stringify(payload));
   var link = base + '?rc=' + encodeURIComponent(encoded);
   results.linkOk = true;
   setStatus('link', 'ok', '已生成');

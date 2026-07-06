@@ -223,24 +223,39 @@ var RemoteStore = {
   _cfg: null,
   init: function() {
     try {
-      var saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+      var saved = JSON.parse(localStorage.getItem('remoteConfig'));
+      if (!saved || !saved.key || !saved.bin) {
+        saved = JSON.parse(localStorage.getItem('quiz_rc_admin'));
+      }
       if (saved && saved.key && saved.bin) this._cfg = saved;
     } catch(e) {}
   },
   ready: function() { return !!this._cfg; },
   getConfig: function() { return this._cfg; },
-  setConfig: function(key, bin) {
+  setConfig: function(key, bin, accessKey) {
     this._cfg = { key: key, bin: bin };
-    localStorage.setItem('quiz_rc_admin', JSON.stringify(this._cfg));
+    if (accessKey) this._cfg.accessKey = accessKey;
+    localStorage.setItem('remoteConfig', JSON.stringify(this._cfg));
   },
   clearConfig: function() {
     this._cfg = null;
+    localStorage.removeItem('remoteConfig');
     localStorage.removeItem('quiz_rc_admin');
+  },
+  getHeaders: function() {
+    var h = {};
+    if (this._cfg && this._cfg.accessKey) {
+      h['X-Access-Key'] = this._cfg.accessKey;
+    } else if (this._cfg) {
+      h['X-Master-Key'] = this._cfg.key;
+    }
+    return h;
   },
   loadAll: function() {
     if (!this.ready()) return Promise.resolve([]);
     var url = 'https://api.jsonbin.io/v3/b/' + this._cfg.bin + '/latest';
-    return fetch(url, { headers: { 'X-Master-Key': this._cfg.key } })
+    var headers = this.getHeaders();
+    return fetch(url, { headers: headers })
       .then(function(r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
@@ -255,7 +270,9 @@ var RemoteStore = {
   makeStudentLink: function() {
     if (!this.ready()) return '';
     var base = window.location.href.replace(/admin\.html.*$/, 'index.html');
-    var encoded = btoa(JSON.stringify({ k: this._cfg.key, b: this._cfg.bin }));
+    var payload = { k: this._cfg.key, b: this._cfg.bin };
+    if (this._cfg.accessKey) payload.a = this._cfg.accessKey;
+    var encoded = btoa(JSON.stringify(payload));
     return base + '?rc=' + encodeURIComponent(encoded);
   }
 };
@@ -328,14 +345,18 @@ function toggleSetup(force) {
   html += '<div class="setup-desc">配置云端存储后，学生在各自设备答题的数据会自动同步到这里。</div>';
 
   if (!cfg) {
-    html += '<div class="setup-steps"><h4>📌 三步配置</h4><ol>';
+    html += '<div class="setup-steps"><h4>📌 配置步骤</h4><ol>';
     html += '<li>访问 <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> 免费注册</li>';
-    html += '<li>登录后复制 <b>X-Master-Key</b></li>';
+    html += '<li>登录后复制 <b>X-Master-Key</b>（用于读取数据）</li>';
+    html += '<li>点击 <b>"Create Access Key"</b>，勾选 <b>"Read Bins"</b> + <b>"Update Bins"</b>，复制 Access Key（用于写入数据）</li>';
     html += '<li>点击 <b>"Create Bin"</b>，内容输入 <code>[]</code>，然后复制 <b>Bin ID</b></li>';
     html += '</ol></div>';
-    html += '<div class="setup-field"><label>API Key</label>';
+    html += '<div class="setup-field"><label>API Key (Master Key)</label>';
     html += '<input id="setupApiKey" placeholder="粘贴你的 X-Master-Key">';
-    html += '<div class="field-hint">在 <a href="https://jsonbin.io/api-keys" target="_blank">jsonbin.io/api-keys</a> 获取</div></div>';
+    html += '<div class="field-hint">在 <a href="https://jsonbin.io/api-keys" target="_blank">jsonbin.io/api-keys</a> 获取（用于读取云端数据）</div></div>';
+    html += '<div class="setup-field"><label>Access Key <span style="color:#B8AFA0;font-size:12px;font-weight:400">（可选，解决写入403问题）</span></label>';
+    html += '<input id="setupAccessKey" placeholder="粘贴你的 Access Key（需勾选 Update Bins 权限）">';
+    html += '<div class="field-hint">如果写入提示 403，必须填写此项。在 <a href="https://jsonbin.io/api-keys" target="_blank">API Keys</a> 页创建 Access Key 并勾选 Update Bins</div></div>';
     html += '<div class="setup-field"><label>Bin ID</label>';
     html += '<input id="setupBinId" placeholder="粘贴你的 Bin ID"></div>';
     html += '<div class="setup-actions">';
@@ -359,9 +380,10 @@ function toggleSetup(force) {
     var saveBtn = $('setupSave');
     if (saveBtn) saveBtn.addEventListener('click', function() {
       var key = $('setupApiKey').value.trim();
+      var accessKey = $('setupAccessKey').value.trim();
       var bin = $('setupBinId').value.trim();
       if (!key || !bin) { alert('请填写 API Key 和 Bin ID'); return; }
-      RemoteStore.setConfig(key, bin);
+      RemoteStore.setConfig(key, bin, accessKey);
       toggleSetup(false);
       renderRemoteBar();
       loadAndRender();

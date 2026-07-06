@@ -191,14 +191,19 @@ var RemoteStore = {
       try {
         var decoded = JSON.parse(atob(decodeURIComponent(match[1])));
         if (decoded.k && decoded.b) {
-          this._cfg = { key: decoded.k, bin: decoded.b };
-          localStorage.setItem('quiz_rc', JSON.stringify(this._cfg));
+          var cfg = { key: decoded.k, bin: decoded.b };
+          if (decoded.a) cfg.accessKey = decoded.a;
+          this._cfg = cfg;
+          localStorage.setItem('remoteConfig', JSON.stringify(this._cfg));
         }
       } catch(e) {}
     }
     if (!this._cfg) {
       try {
-        var saved = JSON.parse(localStorage.getItem('quiz_rc'));
+        var saved = JSON.parse(localStorage.getItem('remoteConfig'));
+        if (!saved || !saved.key || !saved.bin) {
+          saved = JSON.parse(localStorage.getItem('quiz_rc'));
+        }
         if (saved && saved.key && saved.bin) this._cfg = saved;
       } catch(e) {}
     }
@@ -224,10 +229,20 @@ var RemoteStore = {
     if (!this.ready()) return Promise.resolve(false);
     var self = this;
     var maxRetries = 3;
+    function getHeaders() {
+      var h = {};
+      if (self._cfg.accessKey) {
+        h['X-Access-Key'] = self._cfg.accessKey;
+      } else {
+        h['X-Master-Key'] = self._cfg.key;
+      }
+      return h;
+    }
     function attempt(retryCount) {
       var url = 'https://api.jsonbin.io/v3/b/' + self._cfg.bin + '/latest';
       var etag = null;
-      return fetch(url, { headers: { 'X-Master-Key': self._cfg.key } })
+      var headers = getHeaders();
+      return fetch(url, { headers: headers })
         .then(function(r) {
           etag = r.headers.get('ETag');
           return r.json();
@@ -235,7 +250,8 @@ var RemoteStore = {
         .then(function(data) {
           var records = Array.isArray(data.record) ? data.record : [];
           records.push(result);
-          var putHeaders = { 'X-Master-Key': self._cfg.key, 'Content-Type': 'application/json' };
+          var putHeaders = getHeaders();
+          putHeaders['Content-Type'] = 'application/json';
           if (etag) putHeaders['If-Match'] = etag;
           return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
             method: 'PUT',
