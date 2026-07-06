@@ -229,11 +229,9 @@ var RemoteStore = {
     if (!this.ready()) return Promise.resolve(false);
     var self = this;
     var maxRetries = 3;
-    var ACCESS_KEY = '$2a$10$hfggds0Oq6NKb473YsIN5.L12OCoAO7dpKEIi/lR5zfNkvr3XdcWO';
     function attempt(retryCount) {
       var url = 'https://api.jsonbin.io/v3/b/' + self._cfg.bin + '/latest';
       var etag = null;
-      // 读取用 Master Key（GET 一直正常）
       return fetch(url, { headers: { 'X-Master-Key': self._cfg.key } })
         .then(function(r) {
           etag = r.headers.get('ETag');
@@ -242,14 +240,11 @@ var RemoteStore = {
         .then(function(data) {
           var records = Array.isArray(data.record) ? data.record : [];
           records.push(result);
-          // 写入用 Access Key（解决 Private Bin 写入 403）
+          var putHeaders = { 'X-Master-Key': self._cfg.key, 'Content-Type': 'application/json' };
+          if (etag) putHeaders['If-Match'] = etag;
           return fetch('https://api.jsonbin.io/v3/b/' + self._cfg.bin, {
             method: 'PUT',
-            headers: {
-              'X-Access-Key': ACCESS_KEY,
-              'Content-Type': 'application/json',
-              'X-Bin-Versioning': 'false'
-            },
+            headers: putHeaders,
             body: JSON.stringify(records)
           });
         })
